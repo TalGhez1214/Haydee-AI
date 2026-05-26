@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Tghez\\\\haydee\" -Force)",
+      "Bash(Select-Object Name, Mode)",
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell([System.IO.Directory]::Exists\\(\"C:\\\\Users\\\\Tghez\\\\haydee\"\\))",
+      "PowerShell(\\(Get-ChildItem -Path \"C:\\\\Users\\\\Tghez\\\\haydee\" -Force\\).Count)",
+      "PowerShell([System.IO.Directory]::GetFiles\\(\"C:\\\\Users\\\\Tghez\\\\haydee\"\\) | ForEach-Object {[System.IO.Path]::GetFileName\\($_\\)})",
+      "PowerShell([System.IO.Directory]::GetDirectories\\(\"C:\\\\Users\\\\Tghez\\\\haydee\"\\) | ForEach-Object {[System.IO.Path]::GetFileName\\($_\\)})",
+      "Bash(powershell -Command \"\\(Get-Content 'C:\\\\Users\\\\Tghez\\\\.claude\\\\projects\\\\c--Users-Tghez-haydee\\\\84fdd0f4-b84d-484a-842b-e6608afdbf1e\\\\tool-results\\\\toolu_01LTRa89kLCbD5SAkpKd1LCU.json' -Raw | ConvertFrom-Json\\)[0].text\")",
+      "Bash(npx create-next-app@14.2.5 . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git --yes)",
+      "Bash(cd /mnt/c/Users/Tghez/haydee && npx create-next-app@14.2.5 . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git --yes 2>&1)",
+      "Read(//mnt/c/Users/Tghez/**)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Tghez\\\\haydee-init\" -Force | Where-Object { $_.Name -ne '.git' } | ForEach-Object { Move-Item $_.FullName \"C:\\\\Users\\\\Tghez\\\\haydee\\\\\" -Force }; Write-Host \"Done moving files\")"
+    ]
+  }
+}
