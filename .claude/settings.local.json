@@ -12,7 +12,14 @@
       "Bash(npx create-next-app@14.2.5 . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git --yes)",
       "Bash(cd /mnt/c/Users/Tghez/haydee && npx create-next-app@14.2.5 . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git --yes 2>&1)",
       "Read(//mnt/c/Users/Tghez/**)",
-      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Tghez\\\\haydee-init\" -Force | Where-Object { $_.Name -ne '.git' } | ForEach-Object { Move-Item $_.FullName \"C:\\\\Users\\\\Tghez\\\\haydee\\\\\" -Force }; Write-Host \"Done moving files\")"
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Tghez\\\\haydee-init\" -Force | Where-Object { $_.Name -ne '.git' } | ForEach-Object { Move-Item $_.FullName \"C:\\\\Users\\\\Tghez\\\\haydee\\\\\" -Force }; Write-Host \"Done moving files\")",
+      "PowerShell(New-Item -ItemType Directory -Path \"C:\\\\Users\\\\Tghez\\\\haydee\\\\supabase\\\\migrations\" -Force)",
+      "PowerShell(supabase --version 2>&1)",
+      "PowerShell(New-Item -ItemType Directory -Path \"C:\\\\Users\\\\Tghez\\\\haydee\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\" -Force)",
+      "Bash(npx tsc *)",
+      "PowerShell(cmd /c \"dir C:\\\\Users\\\\Tghez\\\\haydee\\\\node_modules\\\\@supabase\\\\postgrest-js\")",
+      "PowerShell(cmd /c \"dir C:\\\\Users\\\\Tghez\\\\haydee\\\\node_modules\\\\@supabase\\\\postgrest-js\\\\dist\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:d[k] for k in ['main','module','exports','types'] if k in d}, indent=2\\)\\)\")"
     ]
   }
 }

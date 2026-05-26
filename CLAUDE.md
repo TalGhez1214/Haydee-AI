@@ -194,8 +194,8 @@ NEXT_PUBLIC_APP_URL=                # Full app URL (e.g. http://localhost:3000)
 
 - [x] Phase 0 — Setup & scaffolding
 - [x] Phase 1 — Database schema (11 tables + RLS + auth trigger)
-- [ ] Phase 2 — Authentication
-- [ ] Phase 3 — Core API routes
+- [x] Phase 2 — Authentication
+- [x] Phase 3 — Core API routes (23 routes across projects, chapters, characters, glossary, flags, culture-queue, author-questions, dashboard, webhooks)
 - [ ] Phase 4 — Frontend foundation (UI primitives, layout)
 - [ ] Phase 5 — Dashboard & onboarding
 - [ ] Phase 6 — Feature pages
