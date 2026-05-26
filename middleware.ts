@@ -29,17 +29,17 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const pathname = request.nextUrl.pathname
-  const isAuthRoute = pathname.startsWith('/auth')
+  const isAuthPage = pathname === '/login' || pathname === '/signup'
   const isApiRoute = pathname.startsWith('/api')
   const isPublic = pathname === '/'
 
-  if (!user && !isAuthRoute && !isApiRoute && !isPublic) {
+  if (!user && !isAuthPage && !isApiRoute && !isPublic) {
     const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
+    url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  if (user && isAuthRoute) {
+  if (user && isAuthPage) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)

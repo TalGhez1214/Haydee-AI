@@ -53,7 +53,7 @@ src/
 │   └── api/             — response.ts, auth.ts, errors.ts
 └── types/               — database.ts, api.ts, ai.ts
 supabase/
-└── migrations/          — 0001–0012 SQL migration files
+└── migrations/          — 0001–0013 SQL migration files
 ```
 
 ---
@@ -169,6 +169,7 @@ Info:    #0C447C  (informational)
 8. **Zod validation** — validate all API input at the route boundary
 9. **Soft deletes** — projects set to `status = 'archived'`, never hard deleted
 10. **Cost logging** — every Anthropic API call inserts a row into `ai_call_log`
+11. **Always update CLAUDE.md** — when a phase completes, mark it done in Phase Progress; when a key architectural decision is made, add it here
 
 ---
 
@@ -192,7 +193,7 @@ NEXT_PUBLIC_APP_URL=                # Full app URL (e.g. http://localhost:3000)
 ## Phase Progress
 
 - [x] Phase 0 — Setup & scaffolding
-- [ ] Phase 1 — Database schema (11 tables + RLS)
+- [x] Phase 1 — Database schema (11 tables + RLS + auth trigger)
 - [ ] Phase 2 — Authentication
 - [ ] Phase 3 — Core API routes
 - [ ] Phase 4 — Frontend foundation (UI primitives, layout)
