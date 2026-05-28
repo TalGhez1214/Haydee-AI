@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { IconArrowLeft } from '@tabler/icons-react'
 import { CharacterRegistry } from '@/components/characters/character-registry'
@@ -12,11 +12,6 @@ export default async function CharactersPage({
   searchParams: { char?: string }
 }) {
   const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
 
   const [projectRes, charactersRes] = await Promise.all([
     supabase

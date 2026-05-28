@@ -433,7 +433,7 @@ export function ManuscriptView({ projectId, chapters, sourceLanguage, targetLang
         style={{ height: 'calc(100vh - 56px - 48px)' }}
       >
         {/* ── Chapter nav: w-12 collapsed, hover expands to w-52 ── */}
-        <div className="w-12 hover:w-52 transition-all duration-[220ms] ease-[cubic-bezier(.4,0,.2,1)] overflow-hidden flex-shrink-0 border-r border-[var(--border)] bg-[var(--bg-subtle)] flex flex-col">
+        <div className="w-11 hover:w-52 transition-all duration-[220ms] ease-[cubic-bezier(.4,0,.2,1)] overflow-hidden flex-shrink-0 border-r border-[var(--border)] bg-[var(--bg-subtle)] flex flex-col">
           <div className="flex-shrink-0 px-3 py-3 border-b border-[var(--border)] flex items-center gap-2 overflow-hidden">
             <span className="flex-shrink-0 w-6 flex items-center justify-center text-[var(--text-tertiary)]">
               <svg

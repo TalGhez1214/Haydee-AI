@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { NewProjectButton } from '@/components/projects/new-project-button'
@@ -13,12 +12,6 @@ export default async function ProjectsPage({
   searchParams: { status?: string }
 }) {
   const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
-
   const statusFilter = searchParams.status ?? 'active'
 
   const query = supabase

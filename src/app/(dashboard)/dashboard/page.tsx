@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { ProjectCard } from '@/components/dashboard/project-card'
 import { NeedsAttentionQueue } from '@/components/dashboard/needs-attention-queue'
 import { NewProjectButton } from '@/components/projects/new-project-button'
@@ -7,12 +7,9 @@ import type { AttentionItem } from '@/components/dashboard/needs-attention-queue
 import type { FlagRow, GlossaryTermRow, ProjectRow } from '@/types/database'
 
 export default async function DashboardPage() {
-  const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  const user = await getAuthUser()
   if (!user) redirect('/login')
+  const supabase = createClient()
 
   const { data: projects } = await supabase
     .from('projects')

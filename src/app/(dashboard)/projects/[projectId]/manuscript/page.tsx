@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { IconArrowLeft } from '@tabler/icons-react'
 import { ManuscriptView } from '@/components/manuscript/manuscript-view'
@@ -10,11 +10,6 @@ export default async function ManuscriptPage({
   params: { projectId: string }
 }) {
   const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
 
   const { data: project } = await supabase
     .from('projects')

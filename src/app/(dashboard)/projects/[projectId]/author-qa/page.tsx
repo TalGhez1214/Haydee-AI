@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { IconArrowLeft } from '@tabler/icons-react'
 import { AuthorQALog } from '@/components/author-qa/author-qa-log'
@@ -10,11 +10,6 @@ export default async function AuthorQAPage({
   params: { projectId: string }
 }) {
   const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
 
   const [projectRes, questionsRes] = await Promise.all([
     supabase.from('projects').select('id, title').eq('id', params.projectId).single(),

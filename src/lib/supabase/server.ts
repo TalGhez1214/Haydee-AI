@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/database'
@@ -26,3 +27,10 @@ export function createClient() {
     }
   )
 }
+
+// Deduplicates auth calls within a single request (layout + page share one network call)
+export const getAuthUser = cache(async () => {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
+})

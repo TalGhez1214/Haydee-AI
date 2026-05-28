@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { IconArrowLeft } from '@tabler/icons-react'
 import { CultureQueue } from '@/components/culture-queue/culture-queue'
@@ -10,11 +10,6 @@ export default async function CultureQueuePage({
   params: { projectId: string }
 }) {
   const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
 
   const [projectRes, flagsRes] = await Promise.all([
     supabase.from('projects').select('id, title').eq('id', params.projectId).single(),
