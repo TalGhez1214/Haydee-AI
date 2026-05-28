@@ -8,8 +8,8 @@ const UpdateCharacterSchema = z.object({
   name_variants: z.array(z.string()).optional(),
   role: z.enum(['protagonist', 'secondary', 'minor', 'narrator']).optional(),
   tone_tags: z.array(z.string()).optional(),
-  translator_note: z.string().optional(),
-  confirmed_target_name: z.string().optional(),
+  translator_note: z.string().nullable().optional(),
+  confirmed_target_name: z.string().nullable().optional(),
   confirmed: z.boolean().optional(),
 })
 
