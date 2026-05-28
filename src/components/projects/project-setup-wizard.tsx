@@ -49,10 +49,9 @@ const GENRE_OPTIONS = [
   'Non-fiction', "Children's", 'Young Adult', 'Poetry', 'Drama', 'Other',
 ].map((g) => ({ value: g, label: g }))
 
-const ALLOWED_EXTS = ['docx', 'pdf', 'txt', 'epub']
+const ALLOWED_EXTS = ['docx', 'txt', 'epub']
 const ALLOWED_MIME = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/pdf',
   'text/plain',
   'application/epub+zip',
 ]
@@ -286,7 +285,7 @@ export function ProjectSetupWizard({ open, onClose }: ProjectSetupWizardProps) {
       {step === 2 && (
         <div className="space-y-4">
           <p className="text-[13px] text-[var(--text-secondary)]">
-            Upload your source manuscript. Supported formats: DOCX, PDF, TXT, EPUB.
+            Upload your source manuscript. Supported formats: DOCX, TXT
           </p>
 
           <div
@@ -303,7 +302,7 @@ export function ProjectSetupWizard({ open, onClose }: ProjectSetupWizardProps) {
             <input
               id="wizard-file-input"
               type="file"
-              accept=".docx,.pdf,.txt,.epub"
+              accept=".docx,.txt,.epub"
               className="sr-only"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) pickFile(f) }}
             />
@@ -334,7 +333,7 @@ export function ProjectSetupWizard({ open, onClose }: ProjectSetupWizardProps) {
                 <div className="text-center">
                   <p className="text-[14px] text-[var(--text-primary)]">Drop your manuscript here</p>
                   <p className="text-[12px] text-[var(--text-tertiary)] mt-0.5">
-                    or click to browse · DOCX, PDF, TXT, EPUB
+                    or click to browse · DOCX, TXT
                   </p>
                 </div>
               </>

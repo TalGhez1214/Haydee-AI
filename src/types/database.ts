@@ -53,6 +53,8 @@ export type ChunkRow = {
   text: string
   word_count: number | null
   character_mentions: string[]
+  draft_translation: Json | null
+  translated_at: string | null
   created_at: string
 }
 
@@ -133,11 +135,22 @@ export type AiCallLogRow = {
     | 'culture_flags'
     | 'consistency_check'
     | 'untranslatable'
+    | 'translate'
   model_used: string | null
   tokens_input: number | null
   tokens_output: number | null
   cost_usd: number | null
   cached: boolean
+  created_at: string
+}
+
+export type TranslationRequestRow = {
+  id: string
+  project_id: string
+  user_id: string
+  selected_text: string
+  result: string | null
+  status: 'pending' | 'done' | 'error'
   created_at: string
 }
 
@@ -188,6 +201,8 @@ type ChunkInsert = {
   text: string
   word_count?: number | null
   character_mentions?: string[]
+  draft_translation?: Json | null
+  translated_at?: string | null
 }
 
 type CharacterInsert = {
@@ -310,6 +325,16 @@ export interface Database {
         Row: StripeEventRow
         Insert: Omit<StripeEventRow, 'id' | 'created_at'> & { id?: string }
         Update: Partial<Omit<StripeEventRow, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      translation_requests: {
+        Row: TranslationRequestRow
+        Insert: Omit<TranslationRequestRow, 'id' | 'created_at' | 'result' | 'status'> & {
+          id?: string
+          result?: string | null
+          status?: 'pending' | 'done' | 'error'
+        }
+        Update: Partial<Omit<TranslationRequestRow, 'id' | 'created_at'>>
         Relationships: []
       }
     }

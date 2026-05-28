@@ -12,7 +12,6 @@ const ROUTE_TITLES: Record<string, string> = {
 function getTitle(pathname: string): string {
   if (ROUTE_TITLES[pathname]) return ROUTE_TITLES[pathname]
 
-  // /projects/[id]/characters → "Characters"
   const segments = pathname.split('/').filter(Boolean)
   const last = segments[segments.length - 1]
 
@@ -26,6 +25,9 @@ function getTitle(pathname: string): string {
     settings: 'Settings',
     dashboard: 'Dashboard',
   }
+
+  // /projects/[id] → project overview (last segment is the UUID)
+  if (segments[0] === 'projects' && segments.length === 2) return 'Project Overview'
 
   return SEGMENT_LABELS[last] ?? last.charAt(0).toUpperCase() + last.slice(1)
 }

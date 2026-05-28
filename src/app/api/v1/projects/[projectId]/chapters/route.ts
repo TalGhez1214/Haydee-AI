@@ -20,7 +20,7 @@ export async function GET(_req: Request, { params }: Params) {
 
   const { data: chunks, error } = await supabase
     .from('chunks')
-    .select('id, chapter_number, chapter_title, word_count, character_mentions, created_at')
+    .select('id, chapter_number, chapter_title, word_count, character_mentions, translated_at, created_at')
     .eq('manuscript_id', manuscript.id)
     .order('chapter_number', { ascending: true })
 

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { IconArrowLeft } from '@tabler/icons-react'
+import { AuthorQALog } from '@/components/author-qa/author-qa-log'
 
 export default async function AuthorQAPage({
   params,
@@ -15,16 +16,25 @@ export default async function AuthorQAPage({
 
   if (!user) redirect('/login')
 
-  const { data: project } = await supabase
-    .from('projects')
-    .select('id, title')
-    .eq('id', params.projectId)
-    .single()
+  const [projectRes, questionsRes] = await Promise.all([
+    supabase.from('projects').select('id, title').eq('id', params.projectId).single(),
+    supabase
+      .from('author_questions')
+      .select('*')
+      .eq('project_id', params.projectId)
+      .order('created_at', { ascending: false }),
+  ])
 
-  if (!project) notFound()
+  if (!projectRes.data) notFound()
+
+  const project = projectRes.data
+  const questions = questionsRes.data ?? []
+  const pendingCount = questions.filter(
+    (q) => q.status === 'pending' || q.status === 'sent'
+  ).length
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <Link
         href={`/projects/${params.projectId}`}
         className="inline-flex items-center gap-1.5 text-[13px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-quick mb-5"
@@ -32,17 +42,15 @@ export default async function AuthorQAPage({
         <IconArrowLeft size={14} />
         {project.title}
       </Link>
-      <div className="flex items-center justify-between mb-6">
+
+      <div className="flex items-center justify-between mb-5">
         <h1 className="text-[20px] font-semibold text-[var(--text-primary)]">Author Q&amp;A</h1>
+        <span className="text-[13px] text-[var(--text-tertiary)]">
+          {pendingCount} pending · {questions.length} total
+        </span>
       </div>
-      <div className="flex flex-col items-center justify-center py-20 gap-3 text-center bg-[var(--bg)] rounded-card border border-[var(--border)]">
-        <p className="text-[14px] text-[var(--text-secondary)]">
-          Author Q&amp;A log coming in Phase 6.
-        </p>
-        <p className="text-[12px] text-[var(--text-tertiary)]">
-          Track questions for the author and record their responses.
-        </p>
-      </div>
+
+      <AuthorQALog projectId={params.projectId} initialQuestions={questions} />
     </div>
   )
 }

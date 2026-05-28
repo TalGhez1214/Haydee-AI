@@ -59,15 +59,12 @@ export async function DELETE(_req: Request, { params }: Params) {
   if (auth.error) return auth.error
 
   const supabase = createClient()
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('projects')
-    .update({ status: 'archived', updated_at: new Date().toISOString() })
+    .delete()
     .eq('id', params.projectId)
     .eq('user_id', auth.user.id)
-    .select()
-    .single()
 
   if (error) return apiError(error.message, 500)
-  if (!data) return apiError('Project not found', 404)
-  return apiSuccess({ message: 'Project archived' })
+  return apiSuccess({ message: 'Project deleted' })
 }

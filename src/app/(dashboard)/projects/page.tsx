@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { NewProjectButton } from '@/components/projects/new-project-button'
+import { DeleteProjectButton } from '@/components/projects/delete-project-button'
 import { IconAlertTriangle, IconCalendar, IconChevronRight } from '@tabler/icons-react'
 import type { ProjectRow } from '@/types/database'
 
@@ -95,7 +96,7 @@ export default async function ProjectsPage({
       ) : (
         <div className="bg-[var(--bg)] rounded-card shadow-card border border-[var(--border)] overflow-hidden">
           {/* Table header */}
-          <div className="grid grid-cols-[1fr_120px_100px_80px_40px] gap-4 px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-subtle)]">
+          <div className="grid grid-cols-[1fr_120px_100px_80px_72px] gap-4 px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-subtle)]">
             <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">
               Project
             </span>
@@ -131,81 +132,83 @@ export default async function ProjectsPage({
               const openFlags = flagCountByProject[project.id] ?? 0
 
               return (
-                <Link
-                  key={project.id}
-                  href={`/projects/${project.id}`}
-                  className="grid grid-cols-[1fr_120px_100px_80px_40px] gap-4 px-5 py-4 items-center hover:bg-[var(--bg-subtle)] transition-colors duration-quick group"
-                >
-                  {/* Title + author + deadline */}
-                  <div className="min-w-0">
-                    <p className="text-[14px] font-medium text-[var(--text-primary)] truncate">
-                      {project.title}
-                    </p>
-                    <div className="flex items-center gap-3 mt-0.5">
-                      {project.author_name && (
-                        <span className="text-[12px] text-[var(--text-secondary)] truncate max-w-[180px]">
-                          {project.author_name}
+                <div key={project.id} className="relative group">
+                  <Link
+                    href={`/projects/${project.id}`}
+                    className="grid grid-cols-[1fr_120px_100px_80px_72px] gap-4 px-5 py-4 items-center hover:bg-[var(--bg-subtle)] transition-colors duration-quick"
+                  >
+                    {/* Title + author + deadline */}
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-medium text-[var(--text-primary)] truncate">
+                        {project.title}
+                      </p>
+                      <div className="flex items-center gap-3 mt-0.5">
+                        {project.author_name && (
+                          <span className="text-[12px] text-[var(--text-secondary)] truncate max-w-[180px]">
+                            {project.author_name}
+                          </span>
+                        )}
+                        {deadline && (
+                          <span
+                            className={`flex items-center gap-1 text-[12px] ${
+                              isOverdue
+                                ? 'text-danger'
+                                : daysLeft !== null && daysLeft <= 7
+                                ? 'text-warning'
+                                : 'text-[var(--text-tertiary)]'
+                            }`}
+                          >
+                            <IconCalendar size={11} />
+                            {isOverdue ? 'Overdue' : daysLeft === 0 ? 'Today' : `${daysLeft}d`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                      <Badge variant={project.status} />
+                    </div>
+
+                    {/* Progress */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 bg-[var(--bg-muted)] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-brand rounded-full"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="text-[12px] text-[var(--text-secondary)] w-8 text-right">
+                        {pct}%
+                      </span>
+                    </div>
+
+                    {/* Flag count */}
+                    <div>
+                      {openFlags > 0 ? (
+                        <span className="flex items-center gap-1 text-[12px] text-danger">
+                          <IconAlertTriangle size={12} />
+                          {openFlags}
                         </span>
-                      )}
-                      {deadline && (
-                        <span
-                          className={`flex items-center gap-1 text-[12px] ${
-                            isOverdue
-                              ? 'text-danger'
-                              : daysLeft !== null && daysLeft <= 7
-                              ? 'text-warning'
-                              : 'text-[var(--text-tertiary)]'
-                          }`}
-                        >
-                          <IconCalendar size={11} />
-                          {isOverdue
-                            ? 'Overdue'
-                            : daysLeft === 0
-                            ? 'Today'
-                            : `${daysLeft}d`}
-                        </span>
+                      ) : (
+                        <span className="text-[12px] text-[var(--text-tertiary)]">—</span>
                       )}
                     </div>
-                  </div>
 
-                  {/* Status */}
-                  <div>
-                    <Badge variant={project.status} />
-                  </div>
-
-                  {/* Progress */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-[var(--bg-muted)] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-brand rounded-full"
-                        style={{ width: `${pct}%` }}
+                    {/* Arrow */}
+                    <div className="flex justify-end items-center gap-2">
+                      <IconChevronRight
+                        size={16}
+                        className="text-[var(--text-tertiary)] opacity-0 group-hover:opacity-100 transition-opacity"
                       />
                     </div>
-                    <span className="text-[12px] text-[var(--text-secondary)] w-8 text-right">
-                      {pct}%
-                    </span>
-                  </div>
+                  </Link>
 
-                  {/* Flag count */}
-                  <div>
-                    {openFlags > 0 ? (
-                      <span className="flex items-center gap-1 text-[12px] text-danger">
-                        <IconAlertTriangle size={12} />
-                        {openFlags}
-                      </span>
-                    ) : (
-                      <span className="text-[12px] text-[var(--text-tertiary)]">—</span>
-                    )}
+                  {/* Delete button — no CSS transform on this wrapper (transforms break fixed modal positioning) */}
+                  <div className="absolute right-10 inset-y-0 flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-quick">
+                    <DeleteProjectButton projectId={project.id} projectTitle={project.title} />
                   </div>
-
-                  {/* Arrow */}
-                  <div className="flex justify-end">
-                    <IconChevronRight
-                      size={16}
-                      className="text-[var(--text-tertiary)] opacity-0 group-hover:opacity-100 transition-opacity"
-                    />
-                  </div>
-                </Link>
+                </div>
               )
             })}
           </div>

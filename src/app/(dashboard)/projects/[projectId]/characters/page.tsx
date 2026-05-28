@@ -2,11 +2,14 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { IconArrowLeft } from '@tabler/icons-react'
+import { CharacterRegistry } from '@/components/characters/character-registry'
 
 export default async function CharactersPage({
   params,
+  searchParams,
 }: {
   params: { projectId: string }
+  searchParams: { char?: string }
 }) {
   const supabase = createClient()
   const {
@@ -15,36 +18,49 @@ export default async function CharactersPage({
 
   if (!user) redirect('/login')
 
-  const { data: project } = await supabase
-    .from('projects')
-    .select('id, title')
-    .eq('id', params.projectId)
-    .single()
+  const [projectRes, charactersRes] = await Promise.all([
+    supabase
+      .from('projects')
+      .select('id, title, target_language')
+      .eq('id', params.projectId)
+      .single(),
+    supabase
+      .from('characters')
+      .select('*')
+      .eq('project_id', params.projectId)
+      .order('name', { ascending: true }),
+  ])
 
-  if (!project) notFound()
+  if (!projectRes.data) notFound()
+
+  const project = projectRes.data
+  const characters = charactersRes.data ?? []
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="flex flex-col h-full">
       <Link
         href={`/projects/${params.projectId}`}
-        className="inline-flex items-center gap-1.5 text-[13px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-quick mb-5"
+        className="inline-flex items-center gap-1.5 text-[13px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-quick mb-5 flex-shrink-0"
       >
         <IconArrowLeft size={14} />
         {project.title}
       </Link>
-      <div className="flex items-center justify-between mb-6">
+
+      <div className="flex items-center justify-between mb-5 flex-shrink-0">
         <h1 className="text-[20px] font-semibold text-[var(--text-primary)]">
           Character Registry
         </h1>
+        <span className="text-[13px] text-[var(--text-tertiary)]">
+          {characters.length} {characters.length === 1 ? 'character' : 'characters'}
+        </span>
       </div>
-      <div className="flex flex-col items-center justify-center py-20 gap-3 text-center bg-[var(--bg)] rounded-card border border-[var(--border)]">
-        <p className="text-[14px] text-[var(--text-secondary)]">
-          Character registry coming in Phase 6.
-        </p>
-        <p className="text-[12px] text-[var(--text-tertiary)]">
-          Upload a manuscript to automatically extract characters.
-        </p>
-      </div>
+
+      <CharacterRegistry
+        projectId={params.projectId}
+        targetLanguage={project.target_language}
+        initialCharacters={characters}
+        initialSelectedId={searchParams.char}
+      />
     </div>
   )
 }

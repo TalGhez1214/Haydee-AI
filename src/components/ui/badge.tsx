@@ -8,6 +8,8 @@ type BadgeVariant =
   | 'approved'
   | 'flagged'
   | 'open'
+  | 'sent'
+  | 'answered'
   | 'resolved'
   | 'dismissed'
   | 'consistency'
@@ -36,6 +38,8 @@ const LABELS: Record<BadgeVariant, string> = {
   approved: 'Approved',
   flagged: 'Flagged',
   open: 'Open',
+  sent: 'Sent',
+  answered: 'Answered',
   resolved: 'Resolved',
   dismissed: 'Dismissed',
   consistency: 'Consistency',
@@ -59,7 +63,9 @@ const STYLES: Record<BadgeVariant, string> = {
   approved: 'bg-success/10 text-success border-success/20',
   flagged: 'bg-danger/10 text-danger border-danger/20',
   open: 'bg-brand/10 text-brand border-brand/20',
-  resolved: 'bg-success/10 text-success border-success/20',
+  sent: 'bg-info/10 text-info border-info/20',
+  answered: 'bg-success/10 text-success border-success/20',
+  resolved: 'bg-[var(--bg-muted)] text-[var(--text-tertiary)] border-[var(--border)]',
   dismissed: 'bg-[var(--bg-muted)] text-[var(--text-tertiary)] border-[var(--border)]',
   consistency: 'bg-danger/10 text-danger border-danger/20',
   culture: 'bg-warning/10 text-warning border-warning/20',

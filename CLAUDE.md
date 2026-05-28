@@ -198,6 +198,6 @@ NEXT_PUBLIC_APP_URL=                # Full app URL (e.g. http://localhost:3000)
 - [x] Phase 3 — Core API routes (23 routes across projects, chapters, characters, glossary, flags, culture-queue, author-questions, dashboard, webhooks)
 - [x] Phase 4 — Frontend foundation (UI primitives, layout)
 - [x] Phase 5 — Dashboard & onboarding (dashboard, projects list, project overview, 3-step wizard, 5 feature stubs)
-- [ ] Phase 6 — Feature pages
-- [ ] Phase 7 — AI integration (5 Inngest jobs)
+- [x] Phase 6 — Feature pages (manuscript view, character registry, glossary manager, culture queue, author Q&A)
+- [x] Phase 7 — AI integration (5 Inngest jobs via LangGraph + Claude Sonnet)
 - [ ] Phase 8 — Polish & deploy

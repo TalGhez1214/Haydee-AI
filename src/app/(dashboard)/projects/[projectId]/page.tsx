@@ -45,7 +45,7 @@ export default async function ProjectOverviewPage({
   if (!project) notFound()
 
   // Fetch counts in parallel
-  const [charRes, glossaryRes, pendingGlossaryRes, flagsRes, questionsRes] =
+  const [charRes, glossaryRes, pendingGlossaryRes, cultureFlagsRes, untranslatableRes, questionsRes] =
     await Promise.all([
       supabase
         .from('characters')
@@ -64,6 +64,13 @@ export default async function ProjectOverviewPage({
         .from('flags')
         .select('id', { count: 'exact', head: true })
         .eq('project_id', params.projectId)
+        .eq('flag_type', 'culture')
+        .eq('status', 'open'),
+      supabase
+        .from('flags')
+        .select('id', { count: 'exact', head: true })
+        .eq('project_id', params.projectId)
+        .eq('flag_type', 'untranslatable')
         .eq('status', 'open'),
       supabase
         .from('author_questions')
@@ -75,7 +82,9 @@ export default async function ProjectOverviewPage({
   const characterCount = charRes.count ?? 0
   const glossaryCount = glossaryRes.count ?? 0
   const pendingGlossaryCount = pendingGlossaryRes.count ?? 0
-  const openFlagsCount = flagsRes.count ?? 0
+  const openCultureFlagsCount = cultureFlagsRes.count ?? 0
+  const openUntranslatableCount = untranslatableRes.count ?? 0
+  const openFlagsCount = openCultureFlagsCount + openUntranslatableCount
   const pendingQuestionsCount = questionsRes.count ?? 0
 
   const base = `/projects/${params.projectId}`
@@ -94,8 +103,8 @@ export default async function ProjectOverviewPage({
       icon: <IconBook2 size={22} />,
       title: 'Glossary',
       description: 'Manage approved translations for recurring terms.',
-      count: glossaryCount,
-      countLabel: `${pendingGlossaryCount > 0 ? `${pendingGlossaryCount} pending` : 'all approved'}`,
+      count: pendingGlossaryCount > 0 ? pendingGlossaryCount : glossaryCount,
+      countLabel: pendingGlossaryCount > 0 ? 'pending' : 'all approved',
       href: `${base}/glossary`,
       accent: 'text-success',
     },
@@ -103,8 +112,8 @@ export default async function ProjectOverviewPage({
       icon: <IconWorld size={22} />,
       title: 'Culture Queue',
       description: 'Review culturally non-portable passages, severity-ranked.',
-      count: openFlagsCount,
-      countLabel: openFlagsCount === 1 ? 'open flag' : 'open flags',
+      count: openCultureFlagsCount,
+      countLabel: openCultureFlagsCount === 1 ? 'open flag' : 'open flags',
       href: `${base}/culture-queue`,
       accent: 'text-warning',
     },
@@ -112,6 +121,8 @@ export default async function ProjectOverviewPage({
       icon: <IconFileText size={22} />,
       title: 'Manuscript',
       description: 'Read source text with inline highlights for all flag types.',
+      count: openUntranslatableCount,
+      countLabel: openUntranslatableCount === 1 ? 'untranslatable passage' : 'untranslatable passages',
       href: `${base}/manuscript`,
       accent: 'text-info',
     },
@@ -270,6 +281,7 @@ export default async function ProjectOverviewPage({
           </Link>
         ))}
       </div>
+
     </div>
   )
 }

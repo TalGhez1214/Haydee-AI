@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { IconArrowLeft } from '@tabler/icons-react'
+import { GlossaryManager } from '@/components/glossary/glossary-manager'
 
 export default async function GlossaryPage({
   params,
@@ -15,16 +16,22 @@ export default async function GlossaryPage({
 
   if (!user) redirect('/login')
 
-  const { data: project } = await supabase
-    .from('projects')
-    .select('id, title')
-    .eq('id', params.projectId)
-    .single()
+  const [projectRes, termsRes] = await Promise.all([
+    supabase.from('projects').select('id, title').eq('id', params.projectId).single(),
+    supabase
+      .from('glossary_terms')
+      .select('*')
+      .eq('project_id', params.projectId)
+      .order('frequency', { ascending: false }),
+  ])
 
-  if (!project) notFound()
+  if (!projectRes.data) notFound()
+
+  const project = projectRes.data
+  const terms = termsRes.data ?? []
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       <Link
         href={`/projects/${params.projectId}`}
         className="inline-flex items-center gap-1.5 text-[13px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-quick mb-5"
@@ -32,19 +39,16 @@ export default async function GlossaryPage({
         <IconArrowLeft size={14} />
         {project.title}
       </Link>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-[20px] font-semibold text-[var(--text-primary)]">
-          Glossary Manager
-        </h1>
+
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="text-[20px] font-semibold text-[var(--text-primary)]">Glossary Manager</h1>
+        <span className="text-[13px] text-[var(--text-tertiary)]">
+          {terms.filter((t) => t.status === 'pending').length} pending ·{' '}
+          {terms.filter((t) => t.status === 'approved').length} approved
+        </span>
       </div>
-      <div className="flex flex-col items-center justify-center py-20 gap-3 text-center bg-[var(--bg)] rounded-card border border-[var(--border)]">
-        <p className="text-[14px] text-[var(--text-secondary)]">
-          Glossary manager coming in Phase 6.
-        </p>
-        <p className="text-[12px] text-[var(--text-tertiary)]">
-          Upload a manuscript to automatically extract terminology candidates.
-        </p>
-      </div>
+
+      <GlossaryManager projectId={params.projectId} initialTerms={terms} />
     </div>
   )
 }
