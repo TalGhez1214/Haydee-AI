@@ -1,8 +1,7 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { IconArrowLeft } from '@tabler/icons-react'
 import { CharacterRegistry } from '@/components/characters/character-registry'
+import { AssistantContextSetter } from '@/components/assistant/assistant-context-setter'
 
 export default async function CharactersPage({
   params,
@@ -16,7 +15,7 @@ export default async function CharactersPage({
   const [projectRes, charactersRes] = await Promise.all([
     supabase
       .from('projects')
-      .select('id, title, target_language')
+      .select('id, target_language')
       .eq('id', params.projectId)
       .single(),
     supabase
@@ -32,29 +31,17 @@ export default async function CharactersPage({
   const characters = charactersRes.data ?? []
 
   return (
-    <div className="flex flex-col h-full">
-      <Link
-        href={`/projects/${params.projectId}`}
-        className="inline-flex items-center gap-1.5 text-[13px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-quick mb-5 flex-shrink-0"
-      >
-        <IconArrowLeft size={14} />
-        {project.title}
-      </Link>
-
-      <div className="flex items-center justify-between mb-5 flex-shrink-0">
-        <h1 className="text-[20px] font-semibold text-[var(--text-primary)]">
-          Character Registry
-        </h1>
-        <span className="text-[13px] text-[var(--text-tertiary)]">
-          {characters.length} {characters.length === 1 ? 'character' : 'characters'}
-        </span>
-      </div>
-
+    <div className="flex flex-col h-full p-6">
       <CharacterRegistry
         projectId={params.projectId}
         targetLanguage={project.target_language}
         initialCharacters={characters}
         initialSelectedId={searchParams.char}
+      />
+      <AssistantContextSetter
+        projectId={params.projectId}
+        currentPage="characters"
+        unconfirmedCharactersCount={characters.filter((c) => !c.confirmed).length}
       />
     </div>
   )

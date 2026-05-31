@@ -136,12 +136,47 @@ export type AiCallLogRow = {
     | 'consistency_check'
     | 'untranslatable'
     | 'translate'
+    | 'assistant'
   model_used: string | null
   tokens_input: number | null
   tokens_output: number | null
   cost_usd: number | null
   cached: boolean
   created_at: string
+}
+
+export type ProjectTodoRow = {
+  id: string
+  project_id: string
+  title: string
+  description: string | null
+  status: 'open' | 'done'
+  priority: 'high' | 'medium' | 'low'
+  linked_type: 'flag' | 'character' | 'glossary_term' | 'author_question' | 'none'
+  linked_id: string | null
+  auto_generated: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type Bookmark = {
+  url: string
+  title: string
+  description: string | null
+}
+
+export type ResearchNoteRow = {
+  id: string
+  project_id: string
+  title: string
+  content: string
+  category: 'research' | 'preface_draft' | 'reference' | 'bookmark'
+  tags: string[]
+  linked_chapter: number | null
+  linked_character: string | null
+  bookmarks: Bookmark[]
+  created_at: string
+  updated_at: string
 }
 
 export type TranslationRequestRow = {
@@ -256,6 +291,30 @@ type AuthorQuestionInsert = {
   resolved_at?: string | null
 }
 
+export type ProjectTodoInsert = {
+  id?: string
+  project_id: string
+  title: string
+  description?: string | null
+  status?: 'open' | 'done'
+  priority?: 'high' | 'medium' | 'low'
+  linked_type?: 'flag' | 'character' | 'glossary_term' | 'author_question' | 'none'
+  linked_id?: string | null
+  auto_generated?: boolean
+}
+
+export type ResearchNoteInsert = {
+  id?: string
+  project_id: string
+  title: string
+  content?: string
+  category?: 'research' | 'preface_draft' | 'reference' | 'bookmark'
+  tags?: string[]
+  linked_chapter?: number | null
+  linked_character?: string | null
+  bookmarks?: Bookmark[]
+}
+
 // ---- Database type (satisfies Supabase GenericSchema + GenericTable constraints) ----
 
 export interface Database {
@@ -335,6 +394,18 @@ export interface Database {
           status?: 'pending' | 'done' | 'error'
         }
         Update: Partial<Omit<TranslationRequestRow, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      project_todos: {
+        Row: ProjectTodoRow
+        Insert: ProjectTodoInsert
+        Update: Partial<ProjectTodoInsert> & { updated_at?: string }
+        Relationships: []
+      }
+      research_notes: {
+        Row: ResearchNoteRow
+        Insert: ResearchNoteInsert
+        Update: Partial<ResearchNoteInsert> & { updated_at?: string }
         Relationships: []
       }
     }

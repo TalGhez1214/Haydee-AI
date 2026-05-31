@@ -3,6 +3,13 @@
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 
+export function ConditionalTopbar() {
+  const pathname = usePathname()
+  const isProjectFeature = /^\/projects\/[^/]+\/.+/.test(pathname)
+  if (isProjectFeature) return null
+  return <Topbar />
+}
+
 const ROUTE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/projects': 'Projects',
@@ -22,6 +29,8 @@ function getTitle(pathname: string): string {
     glossary: 'Glossary',
     'culture-queue': 'Culture Queue',
     'author-qa': 'Author Q&A',
+    'todo-list': 'To-Do List',
+    research: 'Research Notebook',
     settings: 'Settings',
     dashboard: 'Dashboard',
   }

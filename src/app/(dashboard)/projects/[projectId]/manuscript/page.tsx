@@ -1,8 +1,7 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { IconArrowLeft } from '@tabler/icons-react'
 import { ManuscriptView } from '@/components/manuscript/manuscript-view'
+import { AssistantContextSetter } from '@/components/assistant/assistant-context-setter'
 
 export default async function ManuscriptPage({
   params,
@@ -13,7 +12,7 @@ export default async function ManuscriptPage({
 
   const { data: project } = await supabase
     .from('projects')
-    .select('id, title, source_language, target_language')
+    .select('id, source_language, target_language')
     .eq('id', params.projectId)
     .single()
 
@@ -70,25 +69,16 @@ export default async function ManuscriptPage({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-4 flex-shrink-0">
-        <Link
-          href={`/projects/${params.projectId}`}
-          className="inline-flex items-center gap-1.5 text-[13px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-quick"
-        >
-          <IconArrowLeft size={14} />
-          {project.title}
-        </Link>
-        <span className="text-[13px] text-[var(--text-tertiary)]">
-          {chapters.length} {chapters.length === 1 ? 'chapter' : 'chapters'}
-          {totalOpenFlags > 0 && ` · ${totalOpenFlags} open flags`}
-        </span>
-      </div>
-
       <ManuscriptView
         projectId={params.projectId}
         chapters={chapters}
         sourceLanguage={project.source_language}
         targetLanguage={project.target_language}
+      />
+      <AssistantContextSetter
+        projectId={params.projectId}
+        currentPage="manuscript"
+        openFlagsCount={totalOpenFlags}
       />
     </div>
   )

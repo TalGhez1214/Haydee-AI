@@ -23,6 +23,11 @@ type BadgeVariant =
   | 'free'
   | 'pro'
   | 'team'
+  | 'done'
+  | 'research'
+  | 'preface_draft'
+  | 'reference'
+  | 'bookmark_cat'
 
 interface BadgeProps {
   variant: BadgeVariant
@@ -53,6 +58,11 @@ const LABELS: Record<BadgeVariant, string> = {
   free: 'Free',
   pro: 'Pro',
   team: 'Team',
+  done: 'Done',
+  research: 'Research',
+  preface_draft: 'Preface Draft',
+  reference: 'Reference',
+  bookmark_cat: 'Bookmark',
 }
 
 const STYLES: Record<BadgeVariant, string> = {
@@ -69,7 +79,7 @@ const STYLES: Record<BadgeVariant, string> = {
   dismissed: 'bg-[var(--bg-muted)] text-[var(--text-tertiary)] border-[var(--border)]',
   consistency: 'bg-danger/10 text-danger border-danger/20',
   culture: 'bg-warning/10 text-warning border-warning/20',
-  untranslatable: 'bg-brand/10 text-brand border-brand/20',
+  untranslatable: 'bg-info/10 text-info border-info/20',
   glossary: 'bg-success/10 text-success border-success/20',
   in_progress: 'bg-brand/10 text-brand border-brand/20',
   review: 'bg-warning/10 text-warning border-warning/20',
@@ -78,6 +88,11 @@ const STYLES: Record<BadgeVariant, string> = {
   free: 'bg-[var(--bg-muted)] text-[var(--text-secondary)] border-[var(--border)]',
   pro: 'bg-brand/10 text-brand border-brand/20',
   team: 'bg-success/10 text-success border-success/20',
+  done: 'bg-success/10 text-success border-success/20',
+  research: 'bg-info/10 text-info border-info/20',
+  preface_draft: 'bg-brand/10 text-brand border-brand/20',
+  reference: 'bg-[var(--bg-muted)] text-[var(--text-secondary)] border-[var(--border)]',
+  bookmark_cat: 'bg-warning/10 text-warning border-warning/20',
 }
 
 export function Badge({ variant, className, children }: BadgeProps) {

@@ -3,24 +3,24 @@
 @tailwind utilities;
 
 :root {
-  --brand: #534AB7;
-  --brand-light: #6B63C8;
-  --brand-dark: #3D3592;
-  --success: #1D9E75;
-  --danger: #E24B4A;
-  --warning: #E8A838;
-  --info: #0C447C;
+  --brand: #5C766D;
+  --brand-light: #7D9E95;
+  --brand-dark: #3E5550;
+  --success: #5C766D;
+  --danger: #8A4525;
+  --warning: #7A5230;
+  --info: #5C766D;
 
-  --bg: #ffffff;
-  --bg-subtle: #f9f9fb;
-  --bg-muted: #f2f2f6;
+  --bg: #EDE9E6;
+  --bg-subtle: #F4F1EE;
+  --bg-muted: #E0DBD7;
 
-  --text-primary: #111118;
-  --text-secondary: #4b4b6a;
-  --text-tertiary: #8888aa;
+  --text-primary: #5C4F4A;
+  --text-secondary: #7A6B65;
+  --text-tertiary: #A89890;
 
-  --border: #e4e4ef;
-  --border-strong: #c8c8de;
+  --border: #D5CFC9;
+  --border-strong: #B8B0A8;
 }
 
 * {
@@ -40,36 +40,36 @@ body {
 
 /* Manuscript flag highlights */
 .flag-consistency {
-  background-color: rgba(226, 75, 74, 0.12);
+  background-color: rgba(138, 69, 37, 0.13);
   text-decoration: underline;
-  text-decoration-color: #E24B4A;
+  text-decoration-color: #8A4525;
   text-underline-offset: 2px;
   cursor: pointer;
   border-radius: 2px;
 }
 
 .flag-culture {
-  background-color: rgba(232, 168, 56, 0.12);
+  background-color: rgba(201, 153, 107, 0.28);
   text-decoration: underline;
-  text-decoration-color: #E8A838;
+  text-decoration-color: #7A5230;
   text-underline-offset: 2px;
   cursor: pointer;
   border-radius: 2px;
 }
 
 .flag-untranslatable {
-  background-color: rgba(83, 74, 183, 0.12);
+  background-color: rgba(92, 118, 109, 0.18);
   text-decoration: underline;
-  text-decoration-color: #534AB7;
+  text-decoration-color: #5C766D;
   text-underline-offset: 2px;
   cursor: pointer;
   border-radius: 2px;
 }
 
 .flag-glossary {
-  background-color: rgba(29, 158, 117, 0.12);
+  background-color: rgba(92, 79, 74, 0.09);
   text-decoration: underline;
-  text-decoration-color: #1D9E75;
+  text-decoration-color: #7D9E95;
   text-underline-offset: 2px;
   cursor: pointer;
   border-radius: 2px;
@@ -80,6 +80,15 @@ body {
 .flag-untranslatable:hover,
 .flag-glossary:hover {
   filter: brightness(0.95);
+}
+
+@keyframes dotPulse {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50%       { transform: translateY(-5px); opacity: 1; }
+}
+
+.dot-pulse {
+  animation: dotPulse 1.8s infinite ease-in-out;
 }
 
 @layer utilities {

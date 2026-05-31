@@ -123,19 +123,28 @@ Inngest webhook: `/api/webhooks/inngest`
 ## Design System
 
 ### Colors
+Palette (4 brand colors only):
 ```
-Brand:   #534AB7  (primary actions, active states)
-Success: #1D9E75  (approved, done)
-Danger:  #E24B4A  (errors, consistency flags)
-Warning: #E8A838  (culture flags)
-Info:    #0C447C  (informational)
+#EDE9E6  — warm stone      (main background)
+#C9996B  — terracotta      (accent, highlights)
+#5C4F4A  — dark warm brown (text primary, dark accents)
+#5C766D  — sage green      (brand, interactive, info, success)
+```
+
+Semantic tokens (readable text-safe versions):
+```
+Brand:   #5C766D  (primary actions, active states — sage green)
+Success: #5C766D  (approved, done)
+Danger:  #8A4525  (errors, consistency flags — dark burnt sienna)
+Warning: #7A5230  (culture flags — dark terracotta, readable on light bg)
+Info:    #5C766D  (informational)
 ```
 
 ### Flag highlight colors (manuscript view)
-- `consistency` → red `#E24B4A` at 12% opacity + underline
-- `culture` → amber `#E8A838` at 12% opacity + underline
-- `untranslatable` → purple `#534AB7` at 12% opacity + underline
-- `glossary` → green `#1D9E75` at 12% opacity + underline
+- `consistency` → dark sienna `#8A4525` at 13% opacity + `#8A4525` underline
+- `culture` → terracotta `#C9996B` at 28% opacity + `#7A5230` underline
+- `untranslatable` → sage `#5C766D` at 18% opacity + `#5C766D` underline
+- `glossary` → dark brown `#5C4F4A` at 9% opacity + `#7D9E95` underline
 
 ### Typography (system fonts only)
 - Page title: `text-[20px] font-semibold`

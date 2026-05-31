@@ -1,8 +1,7 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { IconArrowLeft } from '@tabler/icons-react'
 import { CultureQueue } from '@/components/culture-queue/culture-queue'
+import { AssistantContextSetter } from '@/components/assistant/assistant-context-setter'
 
 export default async function CultureQueuePage({
   params,
@@ -23,28 +22,17 @@ export default async function CultureQueuePage({
 
   if (!projectRes.data) notFound()
 
-  const project = projectRes.data
   const flags = flagsRes.data ?? []
   const openCount = flags.filter((f) => f.status === 'open').length
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <Link
-        href={`/projects/${params.projectId}`}
-        className="inline-flex items-center gap-1.5 text-[13px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-quick mb-5"
-      >
-        <IconArrowLeft size={14} />
-        {project.title}
-      </Link>
-
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-[20px] font-semibold text-[var(--text-primary)]">Culture Queue</h1>
-        <span className="text-[13px] text-[var(--text-tertiary)]">
-          {openCount} open · {flags.length} total
-        </span>
-      </div>
-
+    <div className="max-w-4xl mx-auto p-6">
       <CultureQueue projectId={params.projectId} initialFlags={flags} />
+      <AssistantContextSetter
+        projectId={params.projectId}
+        currentPage="culture-queue"
+        openFlagsCount={openCount}
+      />
     </div>
   )
 }

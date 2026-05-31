@@ -6,6 +6,7 @@ import type { Database, ProjectRow, ChunkRow, Json } from '@/types/database'
 import { llm } from '@/lib/anthropic/client'
 import { logAiCall } from '@/lib/ai/utils/cost'
 import { INGEST_SYSTEM_PROMPT, buildIngestUserPrompt } from '@/lib/ai/prompts/ingest-prompts'
+import { generateAutoTasks } from '@/lib/ai/utils/auto-tasks'
 
 // ---- Zod schema for LLM output ----
 
@@ -309,6 +310,16 @@ function makeMergeAndSaveNode(supabase: SupabaseClient<Database>) {
     )
     if (memoryError) console.error('[ingest] save_project_memory failed:', memoryError.message)
     else console.log('[ingest] save_project_memory ok')
+
+    // Generate auto tasks based on analysis results
+    await generateAutoTasks(
+      supabase,
+      state.projectId,
+      flagInserts,
+      chunks,
+      characterMap.size,
+      glossaryMap.size
+    )
 
     return {}
   }
