@@ -203,6 +203,16 @@ export type StripeEventRow = {
   created_at: string
 }
 
+export type ChatSessionRow = {
+  id: string
+  user_id: string
+  project_id: string
+  title: string
+  messages: Json
+  created_at: string
+  updated_at: string
+}
+
 // ---- Insert types (all nullable/defaulted fields are optional) ----
 
 type ProjectInsert = {
@@ -413,6 +423,12 @@ export interface Database {
         Row: ResearchNoteRow
         Insert: ResearchNoteInsert
         Update: Partial<ResearchNoteInsert> & { updated_at?: string }
+        Relationships: []
+      }
+      chat_sessions: {
+        Row: ChatSessionRow
+        Insert: Omit<ChatSessionRow, 'id' | 'created_at' | 'updated_at'> & { id?: string }
+        Update: Partial<Pick<ChatSessionRow, 'messages' | 'title'>> & { updated_at?: string }
         Relationships: []
       }
     }
