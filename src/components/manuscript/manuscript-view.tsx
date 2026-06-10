@@ -24,6 +24,9 @@ interface Props {
   targetLanguage: string
 }
 
+const RTL_LANGUAGES = ['Arabic', 'Hebrew']
+const isRtlLanguage = (lang: string) => RTL_LANGUAGES.includes(lang)
+
 type ContextTab = 'flags' | 'glossary' | 'characters'
 type Suggestion = { approach: string; text: string }
 
@@ -620,6 +623,7 @@ export function ManuscriptView({ projectId, chapters, sourceLanguage, targetLang
                           onChange={(e) => setTranslation(i, e.target.value)}
                           onFocus={() => setFocusedParaIdx(i)}
                           placeholder="Type your translation…"
+                          dir={isRtlLanguage(targetLanguage) ? 'rtl' : 'ltr'}
                           className="w-full resize-none bg-transparent text-[15px] leading-loose text-[var(--text-primary)] focus:outline-none placeholder:text-[var(--text-tertiary)] py-2"
                           rows={Math.max(3, Math.ceil(para.text.length / 90))}
                         />
