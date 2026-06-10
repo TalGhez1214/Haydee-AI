@@ -12,6 +12,8 @@ import {
   IconSparkles,
   IconSearch,
 } from '@tabler/icons-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useApi } from '@/hooks/use-api'
 import type { AssistantContext } from './assistant-context'
 
@@ -36,6 +38,7 @@ export function AssistantPanel({ context }: Props) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput]       = useState('')
   const [streaming, setStreaming] = useState(false)
+  const [thinking, setThinking]   = useState(false)
   const messagesEndRef      = useRef<HTMLDivElement>(null)
   const abortControllerRef  = useRef<AbortController | null>(null)
 
@@ -68,6 +71,7 @@ export function AssistantPanel({ context }: Props) {
     setMessages((prev) => [...prev, { role: 'user', content }])
     setInput('')
     setStreaming(true)
+    setThinking(true)
 
     const history = messages.slice(-10).map((m) => ({ role: m.role, content: m.content }))
     const controller = new AbortController()
@@ -94,6 +98,7 @@ export function AssistantPanel({ context }: Props) {
       let buffer        = ''
       let accumulated   = ''
 
+      setThinking(false)
       setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
 
       while (true) {
@@ -125,6 +130,7 @@ export function AssistantPanel({ context }: Props) {
       }
     } finally {
       setStreaming(false)
+      setThinking(false)
       abortControllerRef.current = null
     }
   }
@@ -202,7 +208,7 @@ export function AssistantPanel({ context }: Props) {
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto min-h-0 max-h-[380px] scrollbar-thin">
+        <div className="flex-1 overflow-y-auto min-h-[200px] max-h-[380px] scrollbar-thin">
           {messages.length === 0 ? (
             <div className="p-5 space-y-[10px]">
               {SUGGESTIONS.map(({ Icon, label }) => (
@@ -224,22 +230,47 @@ export function AssistantPanel({ context }: Props) {
                   key={i}
                   className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
                 >
-                  <div
-                    className={`max-w-[90%] px-3 py-2 rounded-[12px] text-[13px] leading-relaxed whitespace-pre-wrap ${
-                      msg.role === 'user'
-                        ? 'bg-[#334155] text-white'
-                        : 'bg-[var(--bg-muted)] text-[var(--text-primary)]'
-                    }`}
-                  >
-                    {msg.content}
-                    {msg.role === 'assistant' && streaming && i === messages.length - 1 && (
-                      <span className="inline-flex gap-0.5 ml-1 align-middle">
-                        <span className="w-1 h-1 rounded-full bg-current animate-bounce [animation-delay:0ms]" />
-                        <span className="w-1 h-1 rounded-full bg-current animate-bounce [animation-delay:150ms]" />
-                        <span className="w-1 h-1 rounded-full bg-current animate-bounce [animation-delay:300ms]" />
-                      </span>
-                    )}
-                  </div>
+                  {msg.role === 'assistant' && streaming && i === messages.length - 1 && msg.content === '' ? (
+                    <div className="px-3 py-3 rounded-[12px] bg-[var(--bg-muted)] flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[var(--text-tertiary)] animate-bounce [animation-delay:0ms]" />
+                      <span className="w-2 h-2 rounded-full bg-[var(--text-tertiary)] animate-bounce [animation-delay:150ms]" />
+                      <span className="w-2 h-2 rounded-full bg-[var(--text-tertiary)] animate-bounce [animation-delay:300ms]" />
+                    </div>
+                  ) : (
+                    <div
+                      className={`max-w-[90%] px-3 py-2 rounded-[12px] text-[13px] leading-relaxed ${
+                        msg.role === 'user'
+                          ? 'bg-[#334155] text-white whitespace-pre-wrap'
+                          : 'bg-[var(--bg-muted)] text-[var(--text-primary)]'
+                      }`}
+                    >
+                      {msg.role === 'user' ? (
+                        msg.content
+                      ) : (
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            h1: ({ children }) => <p className="text-[14px] font-semibold mt-2 mb-1 first:mt-0">{children}</p>,
+                            h2: ({ children }) => <p className="text-[13px] font-semibold mt-2 mb-1 first:mt-0">{children}</p>,
+                            h3: ({ children }) => <p className="text-[13px] font-medium mt-1.5 mb-0.5 first:mt-0">{children}</p>,
+                            p:  ({ children }) => <p className="mb-1.5 last:mb-0">{children}</p>,
+                            strong: ({ children }) => <strong className="font-semibold text-[var(--text-primary)]">{children}</strong>,
+                            em: ({ children }) => <em className="italic">{children}</em>,
+                            ul: ({ children }) => <ul className="list-disc pl-4 mb-1.5 space-y-0.5">{children}</ul>,
+                            ol: ({ children }) => <ol className="list-decimal pl-4 mb-1.5 space-y-0.5">{children}</ol>,
+                            li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                            code: ({ children, className }) => className
+                              ? <code className="block bg-[var(--bg)] rounded px-2 py-1 text-[12px] font-mono my-1 whitespace-pre-wrap">{children}</code>
+                              : <code className="bg-[var(--bg)] rounded px-1 text-[12px] font-mono">{children}</code>,
+                            blockquote: ({ children }) => <blockquote className="border-l-2 border-[var(--border-strong)] pl-3 my-1 text-[var(--text-secondary)]">{children}</blockquote>,
+                            hr: () => <hr className="my-2 border-[var(--border)]" />,
+                          }}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
+                      )}
+                    </div>
+                  )}
 
                   {msg.role === 'user' && !streaming && i === lastUserIdx && (
                     <button
@@ -252,6 +283,15 @@ export function AssistantPanel({ context }: Props) {
                   )}
                 </div>
               ))}
+              {thinking && (
+                <div className="flex flex-col gap-1 items-start">
+                  <div className="px-3 py-3 rounded-[12px] bg-[var(--bg-muted)] flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[var(--text-tertiary)] animate-bounce [animation-delay:0ms]" />
+                    <span className="w-2 h-2 rounded-full bg-[var(--text-tertiary)] animate-bounce [animation-delay:150ms]" />
+                    <span className="w-2 h-2 rounded-full bg-[var(--text-tertiary)] animate-bounce [animation-delay:300ms]" />
+                  </div>
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
           )}
