@@ -28,9 +28,18 @@ export function createClient() {
   )
 }
 
-// Deduplicates auth calls within a single request (layout + page share one network call)
+// Full server-side auth verification — makes a network call to Supabase.
+// Use in API routes and middleware only.
 export const getAuthUser = cache(async () => {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   return user
+})
+
+// Reads session from cookies locally — no network call.
+// Safe to use in layouts/pages because middleware already verified the token.
+export const getAuthSession = cache(async () => {
+  const supabase = createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  return session
 })

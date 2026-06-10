@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -20,6 +21,10 @@ const NAV_ITEMS = [
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
+
+  useEffect(() => {
+    NAV_ITEMS.forEach(({ href }) => router.prefetch(href))
+  }, [router])
 
   const handleLogout = async () => {
     const supabase = createClient()

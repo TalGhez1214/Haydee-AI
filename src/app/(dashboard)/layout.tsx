@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation'
-import { getAuthUser } from '@/lib/supabase/server'
+import { getAuthSession } from '@/lib/supabase/server'
 import { MainLayout } from '@/components/layout/main-layout'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const user = await getAuthUser()
-  if (!user) redirect('/login')
+  const session = await getAuthSession()
+  if (!session) redirect('/login')
 
   return <MainLayout>{children}</MainLayout>
 }

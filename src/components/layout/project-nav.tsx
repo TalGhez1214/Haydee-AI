@@ -1,7 +1,8 @@
 'use client'
 
+import { useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 import {
   IconArrowLeft,
@@ -42,8 +43,13 @@ const TABS = [
 
 export function ProjectNav({ project, badges, projectId }: ProjectNavProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { user } = useAuth()
   const activeSegment = pathname.split('/')[3] ?? 'manuscript'
+
+  useEffect(() => {
+    TABS.forEach(({ segment }) => router.prefetch(`/projects/${projectId}/${segment}`))
+  }, [projectId, router])
 
   const initial = user?.email?.[0]?.toUpperCase() ?? '?'
 

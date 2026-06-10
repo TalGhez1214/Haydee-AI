@@ -24,9 +24,21 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // RSC soft-navigation requests (tab clicks, router.prefetch) carry the "RSC: 1" header.
+  // For these, skip the Supabase auth network call and read the session from the cookie
+  // directly — the JWT is cryptographically verifiable locally and RLS guards all data.
+  // Full page loads still go through getUser() for proper server-side verification.
+  const isRscNavigation = request.headers.get('RSC') === '1'
+
+  let user: { id: string } | null = null
+
+  if (isRscNavigation) {
+    const { data: { session } } = await supabase.auth.getSession()
+    user = session?.user ?? null
+  } else {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  }
 
   const pathname = request.nextUrl.pathname
   const isAuthPage = pathname === '/login' || pathname === '/signup'
