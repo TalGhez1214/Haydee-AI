@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Haydee — Knowledge Pipeline</title>
+<style>
+  :root {
+    --stone:      #EDE9E6;
+    --stone-dark: #DDD8D3;
+    --terra:      #C9996B;
+    --brown:      #5C4F4A;
+    --brown-light:#8A7B76;
+    --sage:       #5C766D;
+    --sage-light: #7D9E95;
+    --danger:     #8A4525;
+    --warn:       #7A5230;
+    --white:      #FFFFFF;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--stone);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--brown);
+    padding: 40px 24px 80px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* ─── Typography ─── */
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--brown-light); margin-bottom: 16px; }
+  h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  p  { font-size: 13px; line-height: 1.6; color: var(--brown-light); }
+
+  /* ─── Badges ─── */
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-left: 6px;
+  }
+  .badge-new  { background: var(--terra); color: white; }
+  .badge-auto { background: var(--sage);  color: white; }
+  .badge-user { background: var(--brown); color: white; }
+
+  /* ─── DB table pill ─── */
+  .db {
+    display: inline-block;
+    font-size: 11px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    background: rgba(92,118,109,0.13);
+    color: var(--sage);
+    border: 1px solid rgba(92,118,109,0.3);
+    padding: 1px 7px;
+    border-radius: 4px;
+    margin: 2px 2px 0;
+  }
+  .db-new {
+    background: rgba(201,153,107,0.15);
+    color: var(--warn);
+    border-color: rgba(201,153,107,0.4);
+  }
+
+  /* ─── Event pill ─── */
+  .event {
+    display: inline-block;
+    font-size: 11px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    background: rgba(92,79,74,0.08);
+    color: var(--brown);
+    border: 1px solid rgba(92,79,74,0.2);
+    padding: 1px 7px;
+    border-radius: 4px;
+    margin: 2px 2px 0;
+  }
+
+  /* ─── Cards ─── */
+  .card {
+    background: var(--white);
+    border-radius: 12px;
+    border: 1px solid var(--stone-dark);
+    padding: 20px 22px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .card-sage   { border-left: 4px solid var(--sage); }
+  .card-terra  { border-left: 4px solid var(--terra); }
+  .card-brown  { border-left: 4px solid var(--brown-light); }
+  .card-new    { border-left: 4px solid var(--terra); background: #FFFAF6; }
+
+  /* ─── Layout helpers ─── */
+  .row { display: flex; gap: 16px; }
+  .col { flex: 1; }
+
+  .arrow-down {
+    text-align: center;
+    padding: 10px 0;
+    color: var(--brown-light);
+    font-size: 22px;
+    line-height: 1;
+  }
+  .arrow-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--brown-light);
+    text-align: center;
+    margin-top: 2px;
+  }
+
+  /* ─── Section dividers ─── */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 32px 0 20px;
+  }
+  .section-divider span {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--brown-light);
+    white-space: nowrap;
+  }
+  .section-divider::before,
+  .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--stone-dark);
+  }
+
+  /* ─── Header ─── */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--stone-dark);
+  }
+  .header-desc { font-size: 13px; color: var(--brown-light); margin-top: 6px; }
+
+  .legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 6px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--brown-light);
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ─── Bullet lists inside cards ─── */
+  .steps {
+    list-style: none;
+    padding: 0;
+    margin-top: 10px;
+  }
+  .steps li {
+    font-size: 13px;
+    color: var(--brown-light);
+    padding: 3px 0;
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.55;
+  }
+  .steps li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--sage-light);
+    font-size: 11px;
+    top: 5px;
+  }
+  .steps li strong { color: var(--brown); font-weight: 600; }
+  .steps li.highlight::before { color: var(--terra); }
+
+  /* ─── Two-column grid inside Job 1 ─── */
+  .job1-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 14px;
+  }
+  .sub-section {
+    background: rgba(237,233,230,0.5);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .sub-section h4 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--sage);
+    margin-bottom: 8px;
+  }
+  .sub-section.output h4 { color: var(--warn); }
+
+  /* ─── Parallel branches ─── */
+  .parallel-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    position: relative;
+  }
+  .parallel-line {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .parallel-line .card { width: 100%; }
+
+  .fork {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 0 0;
+    position: relative;
+  }
+  .fork::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 1px;
+    height: 100%;
+    border-left: 1px dashed var(--stone-dark);
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  .fork-branch {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .fork-branch .card { width: 100%; }
+
+  /* ─── Knowledge base ready box ─── */
+  .kb-ready {
+    background: var(--sage);
+    color: white;
+    border-radius: 12px;
+    padding: 18px 22px;
+    text-align: center;
+  }
+  .kb-ready h3 { color: white; font-size: 15px; margin-bottom: 6px; }
+  .kb-ready p  { color: rgba(255,255,255,0.8); font-size: 12px; }
+  .kb-ready .db-white {
+    display: inline-block;
+    font-size: 11px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    background: rgba(255,255,255,0.18);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.35);
+    padding: 1px 7px;
+    border-radius: 4px;
+    margin: 3px 2px;
+  }
+
+  /* ─── Usage cards (bottom section) ─── */
+  .usage-card {
+    background: var(--white);
+    border-radius: 12px;
+    border: 1px solid var(--stone-dark);
+    padding: 18px 20px;
+    flex: 1;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .usage-card h3 { font-size: 14px; margin-bottom: 8px; }
+  .usage-row { display: flex; gap: 14px; }
+
+  /* ─── Trigger box ─── */
+  .trigger {
+    text-align: center;
+    padding: 16px 24px;
+    border-radius: 12px;
+    border: 2px dashed var(--brown-light);
+    margin-bottom: 0;
+  }
+  .trigger h3 { font-size: 16px; margin-bottom: 4px; }
+
+  /* ─── Step number ─── */
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--sage);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    margin-right: 8px;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+  .step-num.terra { background: var(--terra); }
+
+  /* ─── Job card header bar ─── */
+  .job-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .job-title { display: flex; align-items: center; }
+  .job-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--sage);
+    background: rgba(92,118,109,0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-right: 8px;
+    font-family: monospace;
+  }
+  .job-num.terra { color: var(--terra); background: rgba(201,153,107,0.12); }
+  .trigger-label {
+    font-size: 11px;
+    color: var(--brown-light);
+  }
+
+  @media (max-width: 700px) {
+    .job1-grid { grid-template-columns: 1fr; }
+    .fork       { flex-direction: column; }
+    .usage-row  { flex-direction: column; }
+    .row        { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ──────────────────────── HEADER ──────────────────────── -->
+<div class="header">
+  <div>
+    <h1>Haydee — Knowledge Pipeline</h1>
+    <p class="header-desc">Everything that happens from the moment a translator uploads a book</p>
+    <div class="legend" style="margin-top:12px">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--sage)"></div> Automatic (runs without user action)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--brown-light)"></div> On-demand (user-triggered)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--terra)"></div> <strong>New RAG feature</strong></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ──────────────────────── STAGE 1: UPLOAD ──────────────────────── -->
+<div class="trigger">
+  <h3>📤 Translator uploads a manuscript</h3>
+  <p style="margin-top:4px">Supported formats: .docx &nbsp;·&nbsp; .pdf &nbsp;·&nbsp; .txt &nbsp;·&nbsp; .epub</p>
+</div>
+
+<div class="arrow-down">↓</div>
+
+<div class="card card-brown">
+  <div class="job-header">
+    <div class="job-title">
+      <span class="job-num" style="color:var(--brown-light);background:rgba(92,79,74,0.08);">API</span>
+      <h3>Upload handler &nbsp;<code style="font-size:12px;color:var(--brown-light);font-weight:400">POST /api/v1/projects/{id}/manuscripts/upload</code></h3>
+    </div>
+  </div>
+  <ul class="steps">
+    <li>Extracts text from the file and splits it by chapter headings or natural breaks</li>
+    <li>Creates one row in <span class="db">manuscripts</span> with the full raw text and file metadata</li>
+    <li>Creates one row in <span class="db">chunks</span> per chapter — each storing the chapter number, title, text, and word count</li>
+    <li>Fires Inngest event <span class="event">manuscript/uploaded</span> to kick off background processing</li>
+  </ul>
+</div>
+
+<div class="arrow-down">↓</div>
+<div class="arrow-label"><span class="event">manuscript/uploaded</span></div>
+
+
+<!-- ──────────────────────── STAGE 2: JOB 1 ──────────────────────── -->
+<div class="card card-sage" style="margin-top:8px">
+  <div class="job-header">
+    <div class="job-title">
+      <span class="job-num">JOB 1</span>
+      <h3>Ingest <span class="badge badge-auto">Automatic</span></h3>
+    </div>
+    <span class="trigger-label">Triggered by <span class="event">manuscript/uploaded</span></span>
+  </div>
+
+  <p style="margin-bottom:14px">For each chapter in the manuscript, Claude receives the full chapter text and performs a deep structural analysis. All chapters are processed sequentially. Everything is saved when all chapters are done.</p>
+
+  <div class="job1-grid">
+    <div class="sub-section">
+      <h4>Per-chapter: What Claude extracts</h4>
+      <ul class="steps">
+        <li><strong>Characters</strong> — name, name variants, role (protagonist / secondary / minor / narrator), first appearance quote</li>
+        <li><strong>Glossary candidates</strong> — source-language terms that need translation decisions, with type and frequency</li>
+        <li><strong>Culture flags</strong> — culturally non-portable passages with severity level (high / medium / low) and 2–3 adaptation approaches</li>
+        <li><strong>Untranslatable passages</strong> — wordplay, puns, dialect, form-dependent text — with strategies for the translator</li>
+        <li class="highlight"><strong>Chapter summary</strong> — 1–3 sentence description of what happens in the chapter <span class="badge badge-new">New</span></li>
+      </ul>
+    </div>
+
+    <div class="sub-section output">
+      <h4>After all chapters: What gets saved</h4>
+      <ul class="steps">
+        <li>Characters deduplicated by name → <span class="db">characters</span></li>
+        <li>Glossary terms deduplicated by source term → <span class="db">glossary_terms</span> (status: pending)</li>
+        <li>Culture + untranslatable flags → <span class="db">flags</span></li>
+        <li>Character names found per chapter → <span class="db">chunks.character_mentions</span></li>
+        <li class="highlight">Chapter summary saved per chunk → <span class="db db-new">chunks.summary</span> <span class="badge badge-new">New</span></li>
+        <li>Denormalized cache rebuilt → <span class="db">project_memory</span></li>
+        <li>High-priority to-dos auto-generated → <span class="db">project_todos</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="margin-top:16px; padding: 12px 16px; background:rgba(237,233,230,0.6); border-radius:8px; display:flex; gap:32px; flex-wrap:wrap">
+    <div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--brown-light);margin-bottom:6px;">Then dispatches →</div>
+      <div style="font-size:13px; color:var(--brown)">
+        <span class="event">character/refresh-profile</span> — one event per detected character → triggers <strong>Job 2</strong>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--terra);margin-bottom:6px;">Also dispatches (new) →</div>
+      <div style="font-size:13px; color:var(--brown)">
+        <span class="event">manuscript/ingested</span> → triggers <strong>Job 7</strong> to build the vector knowledge base <span class="badge badge-new">New</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ──────────────────────── STAGE 3: JOB 2 + JOB 7 (parallel) ──────────────────────── -->
+<div class="arrow-down">↓</div>
+
+<div style="position:relative; display:flex; align-items:flex-start; gap:0;">
+  <!-- vertical dashed separator -->
+  <div style="position:absolute; left:50%; top:0; bottom:0; width:1px; border-left:1px dashed var(--stone-dark); z-index:0;"></div>
+
+  <!-- JOB 2 -->
+  <div style="flex:1; padding-right:12px; position:relative; z-index:1;">
+    <div class="card card-sage">
+      <div class="job-header">
+        <div class="job-title">
+          <span class="job-num">JOB 2</span>
+          <h3>Character Profile <span class="badge badge-auto">Automatic</span></h3>
+        </div>
+      </div>
+      <div style="font-size:11px; color:var(--brown-light); margin-bottom:10px;">Triggered by <span class="event">character/refresh-profile</span> — runs once per detected character (in parallel)</div>
+      <ul class="steps">
+        <li>Loads all chunks where <span class="db">chunks.character_mentions</span> contains this character</li>
+        <li>Extracts sentences mentioning the character using regex pattern matching</li>
+        <li>If fewer than 5 passages found → <strong>skips</strong> (not enough evidence)</li>
+        <li>Claude reads all passages and generates <strong>exactly 3 tone descriptors</strong> — each with a supporting quote from the text (e.g. "cold and formal", "self-deprecating", "commanding")</li>
+        <li>Saves tone tags to <span class="db">characters.tone_tags</span></li>
+        <li>Updates <span class="db">project_memory</span> with the new tone profile</li>
+      </ul>
+      <div style="margin-top:12px; font-size:12px; color:var(--brown-light); border-top:1px solid var(--stone-dark); padding-top:10px;">
+        <strong>Used for:</strong> Translation prompt (character voice), assistant context, consistency checks
+      </div>
+    </div>
+  </div>
+
+  <!-- JOB 7 -->
+  <div style="flex:1; padding-left:12px; position:relative; z-index:1;">
+    <div class="card card-new">
+      <div class="job-header">
+        <div class="job-title">
+          <span class="job-num terra">JOB 7</span>
+          <h3>Build Knowledge Base <span class="badge badge-new">New</span> <span class="badge badge-auto">Automatic</span></h3>
+        </div>
+      </div>
+      <div style="font-size:11px; color:var(--brown-light); margin-bottom:10px;">Triggered by <span class="event">manuscript/ingested</span> — runs once per manuscript upload</div>
+      <ul class="steps">
+        <li>Loads all chunks for the manuscript from <span class="db">chunks</span></li>
+        <li>For each chunk, picks the best text input: <span class="db db-new">chunks.summary</span> if available (preferred — semantically dense), otherwise the first 4,000 characters of the full chapter text</li>
+        <li>Sends text to <strong>Voyage AI</strong> REST API (<code style="font-size:11px">voyage-3-lite</code> model) in batches of 64</li>
+        <li>Voyage AI returns a <strong>512-dimensional float vector</strong> for each text — a mathematical representation of the chapter's meaning</li>
+        <li>Stores each vector in <span class="db db-new">chunks.embedding</span> (pgvector column)</li>
+        <li>Logs API usage to <span class="db">ai_call_log</span> with <code style="font-size:11px">job_type: 'embeddings'</code></li>
+      </ul>
+      <div style="margin-top:12px; font-size:12px; color:var(--brown-light); border-top:1px solid var(--stone-dark); padding-top:10px;">
+        <strong>Result:</strong> The book is now "searchable by meaning" — any natural language question can be matched to the most relevant chapters
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ──────────────────────── KNOWLEDGE BASE READY ──────────────────────── -->
+<div class="arrow-down">↓</div>
+
+<div class="kb-ready">
+  <h3>✦ Knowledge Base Ready</h3>
+  <p style="margin-bottom:12px">All background jobs have completed. The project's full knowledge is now indexed and available for AI features.</p>
+  <div>
+    <span class="db-white">characters</span>
+    <span class="db-white">glossary_terms</span>
+    <span class="db-white">flags</span>
+    <span class="db-white">chunks.summary</span>
+    <span class="db-white">chunks.embedding</span>
+    <span class="db-white">project_memory</span>
+    <span class="db-white">project_todos</span>
+  </div>
+</div>
+
+
+<!-- ──────────────────────── ON-DEMAND JOBS ──────────────────────── -->
+<div class="section-divider">
+  <span>On-Demand Jobs — triggered by the translator</span>
+</div>
+
+<div class="row">
+
+  <div class="col">
+    <div class="card card-brown" style="height:100%">
+      <div class="job-header">
+        <div class="job-title">
+          <span class="job-num" style="color:var(--brown-light);background:rgba(92,79,74,0.08)">JOB 3</span>
+          <h3 style="font-size:13px">Culture Flags <span class="badge badge-user">On-demand</span></h3>
+        </div>
+      </div>
+      <p style="margin-bottom:8px">User triggers a culture re-scan on a specific chapter.</p>
+      <ul class="steps">
+        <li>Sends full chapter text to Claude</li>
+        <li>Finds culturally embedded passages that may not survive translation (food, customs, humour, social codes)</li>
+        <li>Each flag has severity and 2–3 adaptation approaches</li>
+        <li>Saves to <span class="db">flags</span> (type: culture)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card card-brown" style="height:100%">
+      <div class="job-header">
+        <div class="job-title">
+          <span class="job-num" style="color:var(--brown-light);background:rgba(92,79,74,0.08)">JOB 4</span>
+          <h3 style="font-size:13px">Consistency Check <span class="badge badge-user">On-demand</span></h3>
+        </div>
+      </div>
+      <p style="margin-bottom:8px">Translator submits a chapter draft for review.</p>
+      <ul class="steps">
+        <li>Loads the translator's working translation draft</li>
+        <li>Loads all confirmed character names and approved glossary terms from <span class="db">project_memory</span></li>
+        <li>Claude finds deviations: wrong character name, unapproved term translation</li>
+        <li>Saves to <span class="db">flags</span> (type: consistency)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card card-brown" style="height:100%">
+      <div class="job-header">
+        <div class="job-title">
+          <span class="job-num" style="color:var(--brown-light);background:rgba(92,79,74,0.08)">JOB 5</span>
+          <h3 style="font-size:13px">Untranslatable Scan <span class="badge badge-user">On-demand</span></h3>
+        </div>
+      </div>
+      <p style="margin-bottom:8px">User requests a deeper scan of a chapter for form-dependent language.</p>
+      <ul class="steps">
+        <li>Sends chapter text to Claude with instructions to find passages where <em>form</em> matters</li>
+        <li>Finds wordplay, puns, dialect, sound patterns, alliteration, acrostics</li>
+        <li>Each passage gets 2–4 concrete translation strategies</li>
+        <li>Saves to <span class="db">flags</span> (type: untranslatable, severity: high)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card card-new" style="height:100%">
+      <div class="job-header">
+        <div class="job-title">
+          <span class="job-num terra">JOB 6</span>
+          <h3 style="font-size:13px">Translation <span class="badge badge-user">On-demand</span></h3>
+        </div>
+      </div>
+      <p style="margin-bottom:8px">Translator highlights text in the manuscript and clicks "AI translate".</p>
+      <ul class="steps">
+        <li>Looks up approved glossary terms that appear in the selection</li>
+        <li>Loads character profiles for characters named in the selection</li>
+        <li class="highlight">Fetches summaries of the current chapter + its neighbours (N−1, N, N+1) from <span class="db db-new">chunks.summary</span> for narrative context <span class="badge badge-new">New</span></li>
+        <li>Claude produces a single high-quality translation using all this context</li>
+        <li>Result stored in <span class="db">translation_requests</span>, polled by the UI</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ──────────────────────── KNOWLEDGE IN ACTION ──────────────────────── -->
+<div class="section-divider">
+  <span>How the Knowledge Base Powers the AI Assistant</span>
+</div>
+
+<div class="usage-row">
+
+  <div class="usage-card" style="border-left:4px solid var(--terra); background:#FFFAF6;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+      <span class="job-num terra" style="width:auto; padding:2px 10px; border-radius:20px; font-size:11px;">RAG Assistant</span>
+      <span class="badge badge-new">New</span>
+    </div>
+    <h3>Answering any question about the book</h3>
+    <p style="margin:6px 0 10px">When the translator asks a question in the chat panel, the system builds a rich context before calling Claude:</p>
+    <ul class="steps">
+      <li class="highlight"><strong>Semantic search</strong> — the question is embedded with Voyage AI, then pgvector finds the 4 most relevant chapter summaries using cosine similarity on <span class="db db-new">chunks.embedding</span></li>
+      <li class="highlight"><strong>Chapter pinning</strong> — if the translator is on the manuscript view, the current chapter and its neighbours are always included regardless of semantic rank</li>
+      <li class="highlight"><strong>Characters</strong> — all character profiles (role, tone tags, confirmed target name, translator notes) are appended to the context</li>
+      <li class="highlight"><strong>Approved glossary</strong> — all approved term translations are included so Claude gives consistent answers</li>
+      <li>Claude receives this full context in the system prompt and streams its response back in real time</li>
+    </ul>
+    <div style="margin-top:12px; padding:10px 12px; background:rgba(201,153,107,0.1); border-radius:8px; font-size:12px; color:var(--warn);">
+      Example questions now answerable: "How does the protagonist's voice change from chapter 1 to chapter 12?" · "Should I translate this cultural reference literally or adapt it?" · "What does the narrator's tone tell us about their relationship to the story?"
+    </div>
+  </div>
+
+  <div class="usage-card" style="border-left:4px solid var(--sage);">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+      <span class="job-num" style="width:auto; padding:2px 10px; border-radius:20px; font-size:11px;">Context Flow</span>
+    </div>
+    <h3>What Claude sees for every request</h3>
+    <p style="margin:6px 0 10px">Every AI call is assembled from the same layered context stack:</p>
+
+    <div style="margin-top:10px; display:flex; flex-direction:column; gap:6px;">
+      <div style="background:rgba(201,153,107,0.12); border:1px solid rgba(201,153,107,0.3); border-radius:6px; padding:8px 12px; font-size:12px;">
+        <strong style="color:var(--warn)">① Chapter Summaries (RAG) ✨ New</strong><br>
+        <span style="color:var(--brown-light)">The 3–5 most semantically relevant chapters to the current query, fetched via vector similarity search</span>
+      </div>
+      <div style="background:rgba(92,118,109,0.1); border:1px solid rgba(92,118,109,0.25); border-radius:6px; padding:8px 12px; font-size:12px;">
+        <strong style="color:var(--sage)">② Character Profiles</strong><br>
+        <span style="color:var(--brown-light)">All characters with confirmed target names, tone tags, and translator notes</span>
+      </div>
+      <div style="background:rgba(92,118,109,0.1); border:1px solid rgba(92,118,109,0.25); border-radius:6px; padding:8px 12px; font-size:12px;">
+        <strong style="color:var(--sage)">③ Approved Glossary</strong><br>
+        <span style="color:var(--brown-light)">All terms the translator has approved with their exact target-language translations</span>
+      </div>
+      <div style="background:rgba(92,79,74,0.06); border:1px solid rgba(92,79,74,0.12); border-radius:6px; padding:8px 12px; font-size:12px;">
+        <strong style="color:var(--brown)">④ Project Metadata</strong><br>
+        <span style="color:var(--brown-light)">Title, author, source → target language pair, genre, style guide</span>
+      </div>
+      <div style="background:rgba(92,79,74,0.06); border:1px solid rgba(92,79,74,0.12); border-radius:6px; padding:8px 12px; font-size:12px;">
+        <strong style="color:var(--brown)">⑤ Conversation History</strong><br>
+        <span style="color:var(--brown-light)">Last 10 messages from the current session for continuity</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ──────────────────────── FOOTER ──────────────────────── -->
+<div style="margin-top:48px; padding-top:24px; border-top:1px solid var(--stone-dark); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+  <div>
+    <p style="font-size:12px; color:var(--brown-light);"><strong>All AI jobs run as background workers via Inngest</strong> — they never block the HTTP response. The translator can keep working while processing happens.</p>
+    <p style="font-size:12px; color:var(--brown-light); margin-top:4px;">Every Anthropic and Voyage AI call is logged in <span class="db">ai_call_log</span> with token counts and cost in USD.</p>
+  </div>
+  <div style="font-size:11px; color:var(--brown-light); text-align:right;">
+    Haydee &nbsp;·&nbsp; AI co-pilot for literary translators
+  </div>
+</div>
+
+</body>
+</html>

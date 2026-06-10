@@ -1,4 +1,5 @@
 import type { ProjectRow, GlossaryTermRow, CharacterRow } from '@/types/database'
+import type { ChapterContext } from '@/lib/ai/rag/retrieve'
 
 export const TRANSLATE_SYSTEM_PROMPT = `You are an expert literary translator assistant. Produce a single, high-quality translation of the passage provided.
 
@@ -15,7 +16,8 @@ export function buildTranslateUserPrompt(
   project: Pick<ProjectRow, 'source_language' | 'target_language' | 'style_guide'>,
   selectedText: string,
   glossaryTerms: GlossaryTermRow[],
-  characters: CharacterRow[]
+  characters: CharacterRow[],
+  chapterContext: ChapterContext[] = []
 ): string {
   const sections: string[] = []
 
@@ -23,6 +25,15 @@ export function buildTranslateUserPrompt(
 
   if (project.style_guide) {
     sections.push(`Style guide:\n${project.style_guide}`)
+  }
+
+  // Narrative context: summaries of the current chapter and its neighbours
+  if (chapterContext.length > 0) {
+    const contextLines = chapterContext.map((c) => {
+      const title = c.chapter_title ? ` — "${c.chapter_title}"` : ''
+      return `  Chapter ${c.chapter_number}${title}: ${c.summary}`
+    })
+    sections.push(`Narrative context:\n${contextLines.join('\n')}`)
   }
 
   // Only terms the translator has explicitly approved

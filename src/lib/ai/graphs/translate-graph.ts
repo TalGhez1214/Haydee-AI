@@ -5,6 +5,7 @@ import type { Database, ProjectRow, GlossaryTermRow, CharacterRow } from '@/type
 import { llm } from '@/lib/anthropic/client'
 import { logAiCall } from '@/lib/ai/utils/cost'
 import { TRANSLATE_SYSTEM_PROMPT, buildTranslateUserPrompt } from '@/lib/ai/prompts/translate-prompts'
+import { retrieveChapterContext, type ChapterContext } from '@/lib/ai/rag/retrieve'
 
 // ---- State ----
 
@@ -12,10 +13,12 @@ const TranslateStateAnnotation = Annotation.Root({
   requestId: Annotation<string>(),
   projectId: Annotation<string>(),
   userId: Annotation<string>(),
+  chunkId: Annotation<string | null>({ reducer: (_, b) => b }),
   selectedText: Annotation<string>({ reducer: (_, b) => b }),
   project: Annotation<ProjectRow | null>({ reducer: (_, b) => b }),
   glossaryTerms: Annotation<GlossaryTermRow[]>({ reducer: (_, b) => b }),
   characters: Annotation<CharacterRow[]>({ reducer: (_, b) => b }),
+  chapterContext: Annotation<ChapterContext[]>({ reducer: (_, b) => b }),
   result: Annotation<string | null>({ reducer: (_, b) => b }),
   inputTokens: Annotation<number>({ reducer: (_, b) => b }),
   outputTokens: Annotation<number>({ reducer: (_, b) => b }),
@@ -80,6 +83,24 @@ function makeLoadCharactersNode(supabase: SupabaseClient<Database>) {
   }
 }
 
+function makeLoadChunkContextNode(supabase: SupabaseClient<Database>) {
+  return async (state: TranslateState) => {
+    if (!state.chunkId) return { chapterContext: [] as ChapterContext[] }
+
+    // Get the chapter number for this chunk so we can fetch neighbour summaries
+    const { data: chunk } = await supabase
+      .from('chunks')
+      .select('chapter_number')
+      .eq('id', state.chunkId)
+      .single()
+
+    if (!chunk) return { chapterContext: [] as ChapterContext[] }
+
+    const context = await retrieveChapterContext(supabase, state.projectId, chunk.chapter_number)
+    return { chapterContext: context }
+  }
+}
+
 function makeTranslateNode() {
   return async (state: TranslateState) => {
     if (!state.project || !state.selectedText) return { result: null }
@@ -91,7 +112,8 @@ function makeTranslateNode() {
           state.project,
           state.selectedText,
           state.glossaryTerms,
-          state.characters
+          state.characters,
+          state.chapterContext
         )
       ),
     ]
@@ -140,6 +162,7 @@ export function buildTranslateGraph(supabase: SupabaseClient<Database>) {
     .addNode('load_project', makeLoadProjectNode(supabase))
     .addNode('load_glossary', makeLoadGlossaryNode(supabase))
     .addNode('load_characters', makeLoadCharactersNode(supabase))
+    .addNode('load_chunk_context', makeLoadChunkContextNode(supabase))
     .addNode('translate', makeTranslateNode())
     .addNode('save_result', makeSaveResultNode(supabase))
     .addNode('log_cost', makeLogCostNode(supabase))
@@ -147,7 +170,8 @@ export function buildTranslateGraph(supabase: SupabaseClient<Database>) {
     .addEdge('load_request', 'load_project')
     .addEdge('load_project', 'load_glossary')
     .addEdge('load_glossary', 'load_characters')
-    .addEdge('load_characters', 'translate')
+    .addEdge('load_characters', 'load_chunk_context')
+    .addEdge('load_chunk_context', 'translate')
     .addEdge('translate', 'save_result')
     .addEdge('save_result', 'log_cost')
     .addEdge('log_cost', END)

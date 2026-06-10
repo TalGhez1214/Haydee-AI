@@ -5,6 +5,8 @@ import { HumanMessage, AIMessage } from '@langchain/core/messages'
 import { z } from 'zod'
 import { assistantGraph } from '@/lib/ai/graphs/assistant-graph'
 import { buildAssistantSystemPrompt } from '@/lib/ai/prompts/assistant-prompts'
+import { buildAssistantContext } from '@/lib/ai/rag/context-builder'
+import { logAiCall } from '@/lib/ai/utils/cost'
 
 type Params = { params: { projectId: string } }
 
@@ -14,6 +16,7 @@ const RequestSchema = z.object({
     .array(z.object({ role: z.enum(['user', 'assistant']), content: z.string() }))
     .max(10)
     .default([]),
+  chapterNumber: z.number().int().optional(),
 })
 
 export async function POST(req: Request, { params }: Params) {
@@ -24,7 +27,7 @@ export async function POST(req: Request, { params }: Params) {
   const parsed = RequestSchema.safeParse(body)
   if (!parsed.success) return apiError('Invalid request body', 400)
 
-  const { message, history } = parsed.data
+  const { message, history, chapterNumber } = parsed.data
   const supabase = createClient()
 
   const { data: project } = await supabase
@@ -35,7 +38,15 @@ export async function POST(req: Request, { params }: Params) {
 
   if (!project) return apiError('Project not found', 404)
 
-  const systemPrompt = buildAssistantSystemPrompt(project)
+  // Build RAG context: relevant chapter summaries + characters + approved glossary
+  const ragContext = await buildAssistantContext(
+    supabase,
+    params.projectId,
+    message,
+    chapterNumber
+  )
+
+  const systemPrompt = buildAssistantSystemPrompt(project, ragContext)
 
   const messages = [
     ...history.map((m) =>
@@ -48,6 +59,10 @@ export async function POST(req: Request, { params }: Params) {
     { messages, systemPrompt },
     { version: 'v2' }
   )
+
+  // Approximate token counts for cost logging
+  const inputTokens = Math.ceil((systemPrompt + JSON.stringify(messages)).length / 4)
+  let outputChars = 0
 
   const readable = new ReadableStream({
     async start(controller) {
@@ -63,11 +78,23 @@ export async function POST(req: Request, { params }: Params) {
                   ? content.map((c: { text?: string }) => c.text ?? '').join('')
                   : ''
             if (text) {
+              outputChars += text.length
               controller.enqueue(encoder.encode(`data: ${JSON.stringify(text)}\n\n`))
             }
           }
         }
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+
+        // Log cost after streaming completes
+        const outputTokens = Math.ceil(outputChars / 4)
+        await logAiCall({
+          supabase,
+          projectId: params.projectId,
+          userId: (await supabase.auth.getUser()).data.user?.id ?? '',
+          jobType: 'assistant',
+          inputTokens,
+          outputTokens,
+        })
       } catch {
         controller.enqueue(encoder.encode('data: [ERROR]\n\n'))
       } finally {

@@ -378,7 +378,10 @@ export function ManuscriptView({ projectId, chapters, sourceLanguage, targetLang
     try {
       const res = await apiFetch(`/api/v1/projects/${projectId}/translate`, {
         method: 'POST',
-        body: JSON.stringify({ selected_text: text }),
+        body: JSON.stringify({
+          selected_text: text,
+          chunk_id: chunkData?.chunk.id ?? undefined,
+        }),
       })
       if (res.ok) {
         const json = await res.json()

@@ -41,6 +41,14 @@ export const job1Ingest = inngest.createFunction(
     // Culture flags and untranslatable passages are already extracted and saved
     // during ingestion — Jobs 3 and 5 are on-demand only (user-triggered per chapter).
 
+    // Trigger Job 7 to generate embeddings for the knowledge base
+    await step.run('dispatch-embeddings-job', async () => {
+      await inngest.send({
+        name: 'manuscript/ingested',
+        data: { manuscriptId, projectId, userId },
+      })
+    })
+
     return { success: true, manuscriptId, projectId }
   }
 )

@@ -266,18 +266,20 @@ function makeMergeAndSaveNode(supabase: SupabaseClient<Database>) {
       else console.log('[ingest] save_flags ok:', flagInserts.length, 'rows')
     }
 
-    // Update character_mentions on each chunk so Job 2 can query passages by character name
+    // Update character_mentions and chapter summary on each chunk
     for (let i = 0; i < analyses.length; i++) {
       const analysis = analyses[i]
       const chunk = chunks[i]
       if (!chunk) continue
+
       const mentionedNames = (analysis.characters ?? []).map((c) => c.name)
-      if (mentionedNames.length > 0) {
-        const { error } = await supabase
-          .from('chunks')
-          .update({ character_mentions: mentionedNames })
-          .eq('id', chunk.id)
-        if (error) console.error('[ingest] update character_mentions failed for chunk', chunk.id, ':', error.message)
+      const chunkUpdate: { character_mentions?: string[]; summary?: string } = {}
+      if (mentionedNames.length > 0) chunkUpdate.character_mentions = mentionedNames
+      if (analysis.chapter_summary) chunkUpdate.summary = analysis.chapter_summary
+
+      if (Object.keys(chunkUpdate).length > 0) {
+        const { error } = await supabase.from('chunks').update(chunkUpdate).eq('id', chunk.id)
+        if (error) console.error('[ingest] update chunk failed for', chunk.id, ':', error.message)
       }
     }
 

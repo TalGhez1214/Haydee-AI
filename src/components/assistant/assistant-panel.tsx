@@ -76,7 +76,11 @@ export function AssistantPanel({ context }: Props) {
     try {
       const res = await apiFetch(`/api/v1/projects/${projectId}/assistant`, {
         method: 'POST',
-        body: JSON.stringify({ message: content, history }),
+        body: JSON.stringify({
+          message: content,
+          history,
+          chapterNumber: context?.chapterNumber,
+        }),
         signal: controller.signal,
       })
 

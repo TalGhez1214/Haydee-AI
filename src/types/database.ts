@@ -55,6 +55,8 @@ export type ChunkRow = {
   character_mentions: string[]
   draft_translation: Json | null
   translated_at: string | null
+  summary: string | null
+  embedding: string | null
   created_at: string
 }
 
@@ -137,6 +139,7 @@ export type AiCallLogRow = {
     | 'untranslatable'
     | 'translate'
     | 'assistant'
+    | 'embeddings'
   model_used: string | null
   tokens_input: number | null
   tokens_output: number | null
@@ -184,6 +187,7 @@ export type TranslationRequestRow = {
   project_id: string
   user_id: string
   selected_text: string
+  chunk_id: string | null
   result: string | null
   status: 'pending' | 'done' | 'error'
   created_at: string
@@ -238,6 +242,8 @@ type ChunkInsert = {
   character_mentions?: string[]
   draft_translation?: Json | null
   translated_at?: string | null
+  summary?: string | null
+  embedding?: string | null
 }
 
 type CharacterInsert = {
@@ -388,10 +394,11 @@ export interface Database {
       }
       translation_requests: {
         Row: TranslationRequestRow
-        Insert: Omit<TranslationRequestRow, 'id' | 'created_at' | 'result' | 'status'> & {
+        Insert: Omit<TranslationRequestRow, 'id' | 'created_at' | 'result' | 'status' | 'chunk_id'> & {
           id?: string
           result?: string | null
           status?: 'pending' | 'done' | 'error'
+          chunk_id?: string | null
         }
         Update: Partial<Omit<TranslationRequestRow, 'id' | 'created_at'>>
         Relationships: []

@@ -4,7 +4,7 @@
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js&logoColor=white)
-![Anthropic Claude](https://img.shields.io/badge/Claude-Sonnet%203.5-D97757?style=flat-square&logo=anthropic&logoColor=white)
+![Anthropic Claude](https://img.shields.io/badge/Claude-Sonnet-D97757?style=flat-square&logo=anthropic&logoColor=white)
 ![LangGraph](https://img.shields.io/badge/LangGraph-1.3-1C3C3C?style=flat-square&logo=langchain&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat-square&logo=supabase&logoColor=white)
 ![Inngest](https://img.shields.io/badge/Inngest-async%20jobs-5D5FEF?style=flat-square)
@@ -12,85 +12,130 @@
 
 ---
 
-## What is Haydee?
+## Why Haydee?
 
-Haydee is a full-stack SaaS application built for professional literary translators working on 80K–200K word book projects. When a translator uploads a manuscript, Haydee's AI pipeline automatically extracts characters, flags culturally non-portable passages, builds a terminology glossary, and generates a project to-do list — all before the translator writes a single word.
+Literary translation is not a search-and-replace problem. A professional translator working on a 150,000-word novel juggles hundreds of named characters with variants across languages, thousands of culture-specific terms, dialect patterns, wordplay that resists translation, and a narrator's voice that must stay consistent from page 1 to page 400.
+
+Today that work happens across a patchwork of spreadsheets, word processors, and sticky notes.
+
+**Haydee solves three real problems:**
+
+**1. The knowledge problem.** A translator mid-project can't hold the entire book in their head. Did the author use "bürgerlich" as a neutral descriptor or a loaded term? When did Elena shift from formal to familiar register with the protagonist? Haydee extracts this knowledge automatically on upload and keeps it queryable.
+
+**2. The context problem.** AI translation tools that operate on a single highlighted passage produce generic output — they don't know who is speaking, what happened in the previous chapter, or what register the author uses in emotionally charged scenes. Haydee feeds the full narrative context (adjacent chapter summaries, character tone profiles, approved glossary) into every translation suggestion.
+
+**3. The consistency problem.** Across a 200,000-word translation, names drift, approved terms get forgotten, and character voice shifts invisibly. Haydee's consistency checker catches these mechanically before they reach the editor.
 
 **The AI suggests. The translator decides.**
 
 ---
 
-## AI & LLM Integration
+## How It Works
 
-This is the core of Haydee. All AI work runs asynchronously through an [Inngest](https://www.inngest.com/) job queue using [LangChain LangGraph](https://langchain-ai.github.io/langgraphjs/) state machines backed by **Anthropic Claude Sonnet 3.5**.
+### Upload → Knowledge Base (automatic)
 
-### 5 Automated AI Pipelines
-
-#### Job 1 — Manuscript Ingestion (auto-triggered on upload)
-
-The centerpiece pipeline. Parses the uploaded manuscript (DOCX via Mammoth, EPUB via jszip + OPF manifest, TXT native), splits it into chapters, then runs a **LangChain StateGraph** across the full text:
+When a translator uploads a manuscript, the following pipeline runs automatically — zero manual steps required.
 
 ```
-Load project metadata
-    → Load chapter chunks
-        → Analyze each chapter (structured LLM call)
-            → Merge + deduplicate across chapters
-                → Persist to database
-                    → Log AI costs
-                        → Dispatch Job 2 per character
+Upload file (DOCX / EPUB / PDF / TXT)
+  │
+  ▼
+Parse + split into chapter chunks
+  │
+  ├─ Job 1: Manuscript Ingestion (Claude Sonnet, per chapter)
+  │    Extracts characters, glossary candidates, culture flags,
+  │    untranslatable passages, and a chapter summary from each chapter.
+  │    Results are deduplicated and merged across the full book.
+  │    Saved to: characters, glossary_terms, flags, chunks.summary
+  │
+  ├─ Job 2: Character Voice Profiling (Claude Sonnet, per character)
+  │    Triggered by Job 1 for each extracted character.
+  │    Scans all chapters for that character's passages.
+  │    Produces 3 tone descriptors with supporting evidence quotes.
+  │    Saved to: characters.tone_tags
+  │
+  └─ Job 7: Embedding Generation (Voyage AI, all chapters)
+       Triggered by Job 1 after all chapters are processed.
+       Sends each chapter summary to Voyage AI (voyage-3-lite, 512 dims).
+       Stores vectors in PostgreSQL via pgvector.
+       Saved to: chunks.embedding
 ```
 
-Every LLM call uses a **Zod schema** for strict structured output — no free-form text escapes into the database. The prompt includes project metadata (title, author, source/target languages, genre, style guide) alongside the chapter text. Output schema:
-
-```typescript
-{
-  characters: { name, name_variants, role, first_appearance_quote }[]
-  glossary_candidates: { source_term, term_type, context, frequency }[]
-  culture_flags: { passage, flag_type, severity, explanation, suggestions[] }[]
-  untranslatable_passages: { passage, type, explanation, strategies[] }[]
-  chapter_summary: string
-}
-```
-
-#### Job 2 — Character Voice Profiling (per-character, on-demand)
-
-Scans all chapter chunks for mentions of a given character, extracts tone markers and contextual passages, then generates 3 tone descriptors with supporting evidence quotes. Translators use these to maintain consistent character voice across the translation.
-
-#### Job 3 — Culture Flag Analysis (on-demand per chapter)
-
-Identifies culturally non-portable passages — idioms, cultural references, humor, dialect, and register mismatches — and ranks them by severity:
-- `high` — meaning breaks without adaptation
-- `medium` — nuance lost, meaning survives
-- `low` — stylistic/cosmetic only
-
-Each flag includes multiple translation approach suggestions.
-
-#### Job 4 — Consistency Checks (on-demand per chapter)
-
-Cross-references the translator's draft against confirmed character names and approved glossary terms to catch name drift and terminology inconsistencies.
-
-#### Job 5 — Untranslatable Passage Scan (on-demand per chapter)
-
-Detects form-dependent content (wordplay, puns, rhymes, name meanings, onomatopoeia) where the source text's meaning is inseparable from its form. Suggests strategies: transcribe, adapt, footnote, substitute, or preserve.
+At this point the book is fully indexed: every chapter has a summary and a semantic embedding, every character has tone tags, and every glossary candidate is awaiting translator approval.
 
 ---
 
-### Streaming AI Assistant
+### RAG-Powered Assistant
 
-Every project has a context-aware AI assistant (accessible from the sidebar) that knows the project's title, author, source/target languages, genre, and style guide. Built on a LangGraph state machine with streaming SSE output — responses appear token-by-token in the UI.
+The assistant panel (available on every project page) is backed by a full Retrieval-Augmented Generation pipeline. Every question triggers:
 
 ```
-POST /api/v1/projects/[projectId]/assistant
-→ ReadableStream (SSE: `data: token\n\n`)
+User question
+  │
+  ▼
+Embed question (Voyage AI)
+  │
+  ▼
+pgvector cosine similarity search → top-4 most relevant chapter summaries
+  │
+  ▼
+Assemble context:
+  ├─ Relevant chapter summaries (semantic search)
+  ├─ All characters (name, role, tone tags, confirmed target name)
+  └─ Approved glossary terms (source → target, type)
+  │
+  ▼
+Claude Sonnet — streaming response (SSE)
 ```
 
-Suggested prompts are context-sensitive: the manuscript page shows manuscript-specific prompts; the culture queue shows flagging-specific prompts; etc.
+When the translator is on the manuscript view, the current chapter and its neighbours are pinned into the context regardless of semantic score — the assistant always knows what the translator is looking at.
 
 ---
 
-### AI Cost Tracking
+### Context-Aware Translation Suggestions
 
-Every Anthropic API call — ingestion, profiling, flagging, assistant — inserts a row into `ai_call_log` with: job type, model, input tokens, output tokens, USD cost, and whether the response was served from Anthropic's prompt cache.
+When a translator selects a passage and requests a translation suggestion:
+
+```
+Selected passage + chunk ID
+  │
+  ▼
+Job 6: Translation Graph (Inngest background job)
+  ├─ Load project metadata
+  ├─ Load approved glossary
+  ├─ Load character profiles
+  ├─ Load chapter context (chunk N-1, N, N+1 summaries via chunk ID)
+  └─ Claude Sonnet — structured translation prompt
+       Includes: narrative context, character register, approved terms
+```
+
+Translation suggestions are not stateless one-shot calls. They know the characters in the scene, what happened in the chapter before, and what happens next.
+
+---
+
+### On-Demand Analysis Jobs
+
+| Job | Trigger | What it does |
+|---|---|---|
+| Job 3 — Culture Flags | Per chapter, on demand | Finds culturally non-portable passages (idioms, humor, dialect, register mismatches); ranks by severity |
+| Job 4 — Consistency Check | Per chapter, on demand | Cross-references translator draft against confirmed character names and approved glossary terms |
+| Job 5 — Untranslatable Scan | Per chapter, on demand | Detects form-dependent content (wordplay, puns, rhymes, name meanings) and suggests strategies |
+
+---
+
+## AI & LLM Architecture
+
+All AI work is **fully asynchronous** — no HTTP request ever waits for an LLM. Every job runs through [Inngest](https://www.inngest.com/) as a background job, orchestrated by [LangChain LangGraph](https://langchain-ai.github.io/langgraphjs/) state machines.
+
+| Component | Provider | Purpose |
+|---|---|---|
+| LLM | Anthropic Claude Sonnet (`@anthropic-ai/sdk`) | All text generation: ingestion, profiling, flagging, translation, assistant |
+| Embeddings | Voyage AI `voyage-3-lite` (REST) | 512-dim semantic vectors for RAG retrieval |
+| Vector DB | PostgreSQL + pgvector (Supabase) | Cosine similarity search via HNSW index |
+| Orchestration | LangGraph StateGraph | Multi-step job pipelines with structured output |
+| Job Queue | Inngest | Async dispatch, retries, observability |
+
+Every Anthropic call logs to `ai_call_log` with: model, job type, input tokens, output tokens, USD cost, and cache status.
 
 ```
 cost_usd = (input_tokens × $3 + output_tokens × $15) / 1,000,000
@@ -106,9 +151,11 @@ cost_usd = (input_tokens × $3 + output_tokens × $15) / 1,000,000
 | Styling | Tailwind CSS |
 | Database | PostgreSQL via Supabase |
 | Auth | Supabase Auth (email/password + RLS) |
-| AI — LLM | Anthropic Claude Sonnet 3.5 (`@anthropic-ai/sdk`) |
-| AI — Orchestration | LangChain LangGraph (`@langchain/langgraph`) |
-| Async Jobs | Inngest (serverless job queue) |
+| AI — LLM | Anthropic Claude Sonnet |
+| AI — Embeddings | Voyage AI `voyage-3-lite` |
+| AI — Orchestration | LangChain LangGraph |
+| Vector Search | pgvector (HNSW cosine similarity) |
+| Async Jobs | Inngest |
 | Payments | Stripe |
 | File Parsing | Mammoth (DOCX), jszip (EPUB), pdf-parse (PDF) |
 | Icons | Tabler Icons |
@@ -119,41 +166,45 @@ cost_usd = (input_tokens × $3 + output_tokens × $15) / 1,000,000
 ## Features
 
 - **Manuscript upload** — DOCX, EPUB, PDF, TXT; auto-splits into chapters
-- **Character registry** — AI-extracted characters with name variants, role classification, tone tags, and confirmed target-language names
-- **Glossary manager** — AI-suggested translations for key terms, filterable by status (pending / approved / flagged)
+- **RAG knowledge base** — every chapter embedded and indexed on upload; queryable by semantic similarity
+- **Character registry** — AI-extracted characters with name variants, role, tone tags, and confirmed target-language names
+- **Glossary manager** — AI-suggested translations filterable by status (pending / approved / flagged)
 - **Culture queue** — Severity-ranked cultural flags with multiple translation approach suggestions
-- **Author Q&A** — Track questions for the original author; export a formatted brief for email
-- **Consistency checker** — Scan any chapter draft for name/term drift
+- **Context-aware translation** — suggestions that include surrounding chapter summaries and character profiles
+- **Author Q&A** — Track questions for the original author; export a formatted brief
+- **Consistency checker** — Scan any chapter draft for name and term drift
 - **To-do list** — Auto-generated tasks linked to flags, characters, and glossary terms
-- **Research notebook** — Notes, references, and bookmarks organized by category and linked to chapters/characters
-- **AI assistant** — Streaming, context-aware chat for any translation question
+- **Research notebook** — Notes, references, and bookmarks linked to chapters and characters
+- **AI assistant** — Streaming, RAG-backed chat that knows the entire book
 
 ---
 
 ## Database Schema
 
-11 PostgreSQL tables with Row-Level Security (RLS) on every table. All queries are automatically scoped to the authenticated user — no service-role bypasses in user-facing routes.
+13 PostgreSQL tables with Row-Level Security on every table. All queries are user-scoped — no service-role bypasses in user-facing routes.
 
 | Table | Purpose |
 |---|---|
-| `users` | Auth + subscription tier (free / pro / team) |
-| `projects` | Translation project metadata, status, deadline |
-| `manuscripts` | Raw uploaded text + parse metadata |
-| `chunks` | Chapter-level text segments + draft translations |
-| `characters` | Character registry with tone tags and target names |
+| `users` | Auth + subscription tier |
+| `projects` | Project metadata, status, deadline |
+| `manuscripts` | Raw text + parse metadata |
+| `chunks` | Chapter segments, summaries, pgvector embeddings |
+| `characters` | Registry with tone tags and confirmed target names |
 | `glossary_terms` | Terminology with AI suggestions and approval status |
-| `flags` | Culture/consistency/untranslatable flags with suggestions |
-| `author_questions` | Q&A thread with original author |
-| `project_memory` | Aggregated project context (JSONB, one row per project) |
-| `project_todos` | Task list (auto-generated + manual, linked to any entity) |
+| `flags` | Culture / consistency / untranslatable flags |
+| `author_questions` | Q&A thread with the original author |
+| `project_memory` | Aggregated project context (one row per project) |
+| `project_todos` | Task list, auto-generated and manual |
 | `research_notes` | Notes, preface drafts, references, bookmarks |
-| `ai_call_log` | Per-call token and cost tracking for every LLM request |
+| `translation_requests` | Translation job history linked to source chunks |
+| `ai_call_log` | Per-call token and cost tracking |
+| `stripe_events` | Webhook event log |
 
 ---
 
 ## API Routes
 
-29 REST endpoints under `/api/v1/`, all authenticated via Supabase RLS. Every response uses a consistent wrapper:
+All 29+ endpoints live under `/api/v1/`, authenticated via Supabase RLS. Consistent response envelope:
 
 ```json
 { "success": true, "data": {}, "error": null, "timestamp": "..." }
@@ -177,10 +228,10 @@ cost_usd = (input_tokens × $3 + output_tokens × $15) / 1,000,000
 | `GET` | `/projects/[id]/characters` | List characters |
 | `GET/PUT` | `/projects/[id]/characters/[cid]` | Get/update character |
 | `POST` | `/projects/[id]/characters/[cid]/refresh-profile` | Re-run Job 2 |
-| `GET` | `/projects/[id]/glossary` | List terms (filter by status/type) |
+| `GET` | `/projects/[id]/glossary` | List terms |
 | `GET/PUT` | `/projects/[id]/glossary/[tid]` | Get/update term |
 | `POST` | `/projects/[id]/glossary/bulk-approve` | Approve multiple terms |
-| `GET` | `/projects/[id]/flags` | List flags (filter by type/status/severity) |
+| `GET` | `/projects/[id]/flags` | List flags |
 | `GET/PUT` | `/projects/[id]/flags/[fid]` | Get/resolve flag |
 | `GET` | `/projects/[id]/culture-queue` | Culture flags sorted by severity |
 | `GET/POST` | `/projects/[id]/author-questions` | List/create questions |
@@ -190,8 +241,8 @@ cost_usd = (input_tokens × $3 + output_tokens × $15) / 1,000,000
 | `PUT` | `/projects/[id]/todos/[tid]` | Mark done/reopen |
 | `GET/POST` | `/projects/[id]/research-notes` | List/create notes |
 | `PUT` | `/projects/[id]/research-notes/[nid]` | Update note |
-| `POST` | `/projects/[id]/assistant` | Chat (streaming SSE) |
-| `POST` | `/projects/[id]/assistant/confirm` | Save assistant suggestion |
+| `POST` | `/projects/[id]/assistant` | Chat (streaming SSE, RAG-backed) |
+| `POST` | `/projects/[id]/translate` | Request translation suggestion |
 | `GET` | `/dashboard` | Summary: projects, flags, glossary, deadlines |
 
 </details>
@@ -203,10 +254,10 @@ cost_usd = (input_tokens × $3 + output_tokens × $15) / 1,000,000
 ### Prerequisites
 
 - Node.js 18+
-- A [Supabase](https://supabase.com) project
+- A [Supabase](https://supabase.com) project with pgvector enabled
 - An [Anthropic](https://console.anthropic.com) API key
-- An [Inngest](https://www.inngest.com) account (dev server works locally)
-- A [Stripe](https://stripe.com) account (test mode)
+- A [Voyage AI](https://dash.voyageai.com) API key (free tier: 200M tokens/month)
+- An [Inngest](https://www.inngest.com) account (dev server works fully offline)
 
 ### Setup
 
@@ -214,39 +265,28 @@ cost_usd = (input_tokens × $3 + output_tokens × $15) / 1,000,000
 git clone https://github.com/TalGhez1214/Haydee-AI.git
 cd Haydee-AI
 npm install
-```
-
-Copy `.env.example` to `.env.local` and fill in your credentials:
-
-```bash
 cp .env.example .env.local
+# fill in credentials
 ```
 
-Run database migrations against your Supabase project:
+Apply all migrations to your Supabase project (SQL editor or Supabase CLI), in order, from `supabase/migrations/`.
+
+Start the app and Inngest dev server in two terminals:
 
 ```bash
-# Apply all migrations from supabase/migrations/ in order
-# via Supabase dashboard SQL editor or supabase CLI
+# Terminal 1
+npm run dev
+
+# Terminal 2 — routes background jobs to your local Next.js app
+npx inngest-cli@latest dev -u http://localhost:3000/api/webhooks/inngest
 ```
 
-Start the dev server:
+### Scripts
 
 ```bash
-npm run dev          # Next.js on localhost:3000
-```
-
-In a separate terminal, start the Inngest dev server to process background jobs:
-
-```bash
-npx inngest-cli@latest dev
-```
-
-### Available Scripts
-
-```bash
-npm run dev          # Development server
+npm run dev          # Development server (localhost:3000)
 npm run build        # Production build
-npm run typecheck    # TypeScript check (tsc --noEmit)
+npm run typecheck    # TypeScript check
 npm run lint         # ESLint
 npm run db:types     # Regenerate Supabase TypeScript types
 ```
@@ -256,24 +296,20 @@ npm run db:types     # Regenerate Supabase TypeScript types
 ## Environment Variables
 
 ```bash
-# Supabase
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
-# Anthropic (server-only)
 ANTHROPIC_API_KEY=
+VOYAGE_API_KEY=
 
-# Inngest
 INNGEST_EVENT_KEY=
 INNGEST_SIGNING_KEY=
 
-# Stripe
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 
-# App
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
@@ -288,7 +324,6 @@ src/
 │   ├── (dashboard)/
 │   │   ├── dashboard/               — Home dashboard
 │   │   └── projects/[projectId]/
-│   │       ├── layout.tsx           — Per-project nav + progress strip
 │   │       ├── manuscript/          — Read-only manuscript view
 │   │       ├── characters/          — Character registry
 │   │       ├── glossary/            — Terminology manager
@@ -300,18 +335,18 @@ src/
 ├── components/
 │   ├── ui/                          — Button, Badge, Modal, Spinner, Toast
 │   ├── layout/                      — Sidebar, Topbar, ProjectNav
-│   ├── assistant/                   — Streaming AI chat panel
-│   └── projects/                    — Todo list, Research notebook
+│   └── assistant/                   — Streaming RAG chat panel
 ├── lib/
 │   ├── supabase/                    — Browser + server clients
 │   ├── ai/
-│   │   ├── graphs/                  — LangGraph state machines
-│   │   ├── prompts/                 — Prompt templates
+│   │   ├── graphs/                  — LangGraph state machines (Jobs 1–7)
+│   │   ├── prompts/                 — Prompt builders
+│   │   ├── rag/                     — Embeddings, retrieval, context builder
 │   │   └── utils/                   — Auto-task generation
 │   └── inngest/                     — Job definitions
 └── types/                           — database.ts, api.ts, ai.ts
 supabase/
-└── migrations/                      — 20 SQL migration files
+└── migrations/                      — 22 SQL migration files
 ```
 
 ---

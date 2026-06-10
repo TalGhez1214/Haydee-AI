@@ -6,6 +6,7 @@ import { inngest } from '@/lib/inngest/client'
 
 const TranslateSchema = z.object({
   selected_text: z.string().min(1).max(4000),
+  chunk_id: z.string().uuid().optional(),
 })
 
 type Params = { params: { projectId: string } }
@@ -39,6 +40,7 @@ export async function POST(req: Request, { params }: Params) {
       project_id: params.projectId,
       user_id: user.id,
       selected_text: parsed.data.selected_text,
+      chunk_id: parsed.data.chunk_id ?? null,
     })
     .select('id')
     .single()
@@ -47,7 +49,12 @@ export async function POST(req: Request, { params }: Params) {
 
   await inngest.send({
     name: 'translation/suggest',
-    data: { requestId: request.id, projectId: params.projectId, userId: user.id },
+    data: {
+      requestId: request.id,
+      projectId: params.projectId,
+      userId: user.id,
+      chunkId: parsed.data.chunk_id ?? null,
+    },
   })
 
   return apiSuccess({ requestId: request.id })
