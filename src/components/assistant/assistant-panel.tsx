@@ -13,6 +13,7 @@ import {
   IconBulb,
   IconChevronLeft,
   IconMessage,
+  IconWorldSearch,
 } from '@tabler/icons-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -89,6 +90,7 @@ export function AssistantPanel({ context }: Props) {
   const [sessionId, setSessionId]     = useState<string | null>(null)
   const [showHistory, setShowHistory] = useState(false)
   const [sessions, setSessions]       = useState<SessionSummary[]>([])
+  const [useWebSearch, setUseWebSearch] = useState(false)
   const [historyLoading, setHistoryLoading] = useState(false)
   const messagesEndRef     = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -183,7 +185,7 @@ export function AssistantPanel({ context }: Props) {
     try {
       const res = await apiFetch(`/api/v1/projects/${projectId}/assistant`, {
         method: 'POST',
-        body: JSON.stringify({ message: content, history, chapterNumber: context?.chapterNumber }),
+        body: JSON.stringify({ message: content, history, chapterNumber: context?.chapterNumber, useWebSearch }),
         signal: controller.signal,
       })
 
@@ -452,6 +454,18 @@ export function AssistantPanel({ context }: Props) {
                 className="flex-1 resize-none rounded-[10px] border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[#334155]/30 focus:border-[#334155] disabled:opacity-50"
               />
               <div className="flex items-center gap-1.5 pb-[1px]">
+                <button
+                  onClick={() => setUseWebSearch((v) => !v)}
+                  disabled={!projectId}
+                  title={useWebSearch ? 'Web search enabled' : 'Enable web search'}
+                  className="h-8 w-8 rounded-full flex items-center justify-center transition-colors disabled:opacity-40"
+                  style={{
+                    color: useWebSearch ? '#5C766D' : 'var(--text-tertiary)',
+                    background: useWebSearch ? '#5C766D1A' : 'transparent',
+                  }}
+                >
+                  <IconWorldSearch size={16} />
+                </button>
                 <button title="Voice input" className="h-8 w-8 rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--bg-muted)] transition-colors">
                   <IconMicrophone size={16} />
                 </button>

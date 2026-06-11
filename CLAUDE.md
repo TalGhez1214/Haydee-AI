@@ -189,6 +189,7 @@ NEXT_PUBLIC_SUPABASE_URL=           # Supabase project URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY=      # Supabase public anon key
 SUPABASE_SERVICE_ROLE_KEY=          # Server-only service role key
 ANTHROPIC_API_KEY=                  # Server-only
+TAVILY_API_KEY=                     # Server-only, for assistant web search
 INNGEST_EVENT_KEY=                  # Inngest event sending key
 INNGEST_SIGNING_KEY=                # Inngest webhook verification
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY= # Public Stripe key

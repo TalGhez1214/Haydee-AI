@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Haydee AI Assistant — How It Works</title>
+<style>
+:root {
+  --bg: #13100E;
+  --bg-card: #1C1614;
+  --bg-node: #231A17;
+  --border: #352820;
+  --border-strong: #4A3028;
+  --stone: #EDE9E6;
+  --terra: #C9996B;
+  --brown: #5C4F4A;
+  --sage: #5C766D;
+  --sage-light: #7D9E95;
+  --danger: #8A4525;
+  --text-primary: #EDE9E6;
+  --text-secondary: #A08878;
+  --text-muted: #6B5045;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.55;
+  padding: 36px 28px 60px;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+h1 { font-size: 20px; font-weight: 600; color: var(--stone); margin-bottom: 6px; }
+.subtitle { color: var(--text-secondary); font-size: 12px; margin-bottom: 32px; }
+
+/* Legend */
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); }
+.ldot { width: 9px; height: 9px; border-radius: 2px; }
+
+/* Layer card */
+.layer {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  overflow: hidden;
+}
+.layer-hdr {
+  padding: 9px 16px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.layer-hdr .hdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.layer-hdr .hpath { margin-left: auto; font-size: 10px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-muted); font-family: 'SF Mono', monospace; }
+.layer-body { padding: 14px 16px; }
+
+/* Connector arrow */
+.conn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2px 0;
+}
+.conn-line { width: 2px; background: var(--border-strong); }
+.conn-head { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid var(--border-strong); }
+.conn-label {
+  font-size: 10px; color: var(--text-muted);
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 3px 10px; border-radius: 20px;
+  white-space: nowrap; margin: 4px 0;
+}
+
+/* Node */
+.node {
+  background: var(--bg-node);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 10px 13px;
+}
+.node-title { font-size: 12px; font-weight: 600; color: var(--stone); margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+.node-path { font-size: 10px; color: var(--text-muted); font-family: 'SF Mono', monospace; margin-bottom: 5px; }
+.node-detail { font-size: 11px; color: var(--text-secondary); }
+.node-detail li { list-style: none; padding-left: 0; }
+.node-detail li::before { content: '→ '; color: var(--text-muted); }
+
+/* Badge */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 1px 7px; border-radius: 4px;
+  font-size: 10px; font-weight: 600;
+}
+.b-sage  { background: rgba(92,118,109,.18); color: #7D9E95; }
+.b-terra { background: rgba(201,153,107,.18); color: #C9996B; }
+.b-stone { background: rgba(237,233,230,.1);  color: #C8C2BE; }
+.b-red   { background: rgba(138,69,37,.2);    color: #D4845A; }
+.b-blue  { background: rgba(61,90,115,.25);   color: #7AABCC; }
+.b-teal  { background: rgba(42,74,69,.3);     color: #7DD4C9; }
+
+/* Step rows */
+.steps { display: flex; flex-direction: column; gap: 7px; }
+.step-row { display: flex; align-items: flex-start; gap: 10px; }
+.snum {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--border-strong); color: var(--text-secondary);
+  font-size: 10px; font-weight: 700; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; margin-top: 2px;
+}
+.sbox {
+  flex: 1; background: var(--bg-node);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 7px 11px; font-size: 11px; color: var(--text-secondary);
+}
+.sbox strong { color: var(--stone); }
+
+/* Parallel grid */
+.parallel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pitem {
+  background: var(--bg-node); border: 1px solid var(--border);
+  border-radius: 6px; padding: 9px 11px;
+}
+.pitem-title { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+.pitem-body { font-size: 10px; color: var(--text-secondary); line-height: 1.6; }
+
+/* ── LangGraph ── */
+.gflow { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.gnode {
+  width: 100%; background: var(--bg-node);
+  border: 1px solid var(--border); border-radius: 8px; padding: 12px 15px;
+}
+.gnode.g-scope   { border-color: #3D5755; }
+.gnode.g-block   { border-color: rgba(138,69,37,.45); }
+.gnode.g-decide  { border-color: #3D5755; }
+.gnode.g-search  { border-color: rgba(201,153,107,.4); }
+.gnode.g-respond { border-color: rgba(92,118,109,.6); background: rgba(92,118,109,.04); }
+.gnode-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.gnode-name { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; font-weight: 700; color: var(--stone); }
+.gnode-body { font-size: 11px; color: var(--text-secondary); line-height: 1.6; }
+.gnode-out {
+  margin-top: 7px; font-size: 10px; color: var(--text-muted);
+  font-family: 'SF Mono', monospace;
+  background: rgba(0,0,0,.35); padding: 5px 8px; border-radius: 4px;
+}
+
+.mini-arr { display: flex; flex-direction: column; align-items: center; }
+.mini-line { width: 2px; background: var(--border-strong); }
+.mini-head { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 7px solid var(--border-strong); }
+
+.start-pill {
+  padding: 4px 14px; border-radius: 14px; font-size: 11px; font-weight: 700;
+  letter-spacing: .05em; background: rgba(92,118,109,.15);
+  border: 1px solid rgba(92,118,109,.35); color: #7D9E95;
+}
+.end-pill {
+  padding: 4px 14px; border-radius: 14px; font-size: 11px; font-weight: 700;
+  letter-spacing: .05em;
+}
+
+/* two-col branch layout */
+.branch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+.branch-fork {
+  width: 100%; height: 44px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding: 0 80px;
+}
+.fork-arm { display: flex; flex-direction: column; align-items: center; }
+.fork-label { font-size: 10px; margin-bottom: 3px; }
+
+/* Divider */
+hr.div { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+
+/* Prompts */
+.prompt-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
+.prompt-hdr {
+  padding: 11px 16px;
+  background: rgba(0,0,0,.2); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.prompt-hdr-left .ptitle { font-size: 12px; font-weight: 600; color: var(--stone); margin-bottom: 2px; }
+.prompt-hdr-left .pmeta { font-size: 10px; color: var(--text-muted); font-family: 'SF Mono', monospace; }
+.prompt-body pre {
+  margin: 0; padding: 16px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 11.5px; line-height: 1.75; color: var(--text-secondary);
+  white-space: pre-wrap; word-break: break-word;
+}
+.pc { color: var(--text-muted); font-style: italic; }   /* comment */
+.pp { color: var(--terra); }                             /* project var */
+.ps { color: #7D9E95; }                                  /* section heading */
+.pv { color: #C2B28A; }                                  /* example value */
+.pk { color: #A8C4BE; }                                  /* keyword */
+
+code {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 11px; background: rgba(255,255,255,.07);
+  padding: 1px 5px; border-radius: 3px; color: var(--stone);
+}
+h2 { font-size: 16px; font-weight: 600; color: var(--stone); margin-bottom: 18px; }
+</style>
+</head>
+<body>
+
+<h1>Haydee AI Assistant — How It Works</h1>
+<p class="subtitle">Full processing flow from user input to streamed response · LangGraph 5-node graph · All system prompts</p>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="ldot" style="background:#3D5A73"></div>Browser / React</div>
+  <div class="legend-item"><div class="ldot" style="background:#3A5248"></div>Next.js API Route</div>
+  <div class="legend-item"><div class="ldot" style="background:#C9996B"></div>LangGraph Node</div>
+  <div class="legend-item"><div class="ldot" style="background:#3D5A73;opacity:.7"></div>External API (Voyage AI / Tavily)</div>
+  <div class="legend-item"><div class="ldot" style="background:#2A4A45"></div>Supabase DB</div>
+  <div class="legend-item"><div class="ldot" style="background:#5C766D"></div>Streaming / success path</div>
+  <div class="legend-item"><div class="ldot" style="background:#8A4525"></div>Blocked path</div>
+</div>
+
+<!-- ═══ 1. BROWSER ═══ -->
+<div class="layer">
+  <div class="layer-hdr" style="background:rgba(61,90,115,.2)">
+    <div class="hdot" style="background:#3D5A73"></div>
+    <span style="color:#7AABCC">BROWSER — React Client</span>
+    <span class="hpath">src/components/assistant/assistant-panel.tsx</span>
+  </div>
+  <div class="layer-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="node">
+        <div class="node-title">Component state</div>
+        <ul class="node-detail">
+          <li><code>messages[]</code> — rendered conversation history</li>
+          <li><code>input</code> — textarea value</li>
+          <li><code>useWebSearch</code> — 🌐 globe toggle (default: false)</li>
+          <li><code>streaming</code> — SSE in progress flag</li>
+          <li><code>sessionId</code> — current chat session (persisted 3 days)</li>
+        </ul>
+      </div>
+      <div class="node">
+        <div class="node-title">Request payload sent</div>
+        <ul class="node-detail">
+          <li><code>message</code> — user text, 1–2000 chars</li>
+          <li><code>history[]</code> — up to last 10 messages (role / content)</li>
+          <li><code>chapterNumber?</code> — from <code>AssistantContext</code> when on manuscript page</li>
+          <li><code>useWebSearch</code> — boolean from globe toggle</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="conn">
+  <div class="conn-line" style="height:18px"></div>
+  <div class="conn-label">POST /api/v1/projects/{projectId}/assistant &nbsp;·&nbsp; application/json</div>
+  <div class="conn-line" style="height:14px"></div>
+  <div class="conn-head"></div>
+</div>
+
+<!-- ═══ 2. API ROUTE ═══ -->
+<div class="layer">
+  <div class="layer-hdr" style="background:rgba(58,82,72,.25)">
+    <div class="hdot" style="background:#3A5248"></div>
+    <span style="color:#7AAF9B">NEXT.JS API ROUTE — Server</span>
+    <span class="hpath">src/app/api/v1/projects/[projectId]/assistant/route.ts</span>
+  </div>
+  <div class="layer-body">
+    <div class="steps">
+
+      <div class="step-row">
+        <div class="snum">1</div>
+        <div class="sbox"><strong>requireAuth()</strong> <span style="color:var(--text-muted)">— reads Supabase session cookie → 401 Unauthorized if missing or expired</span></div>
+      </div>
+
+      <div class="step-row">
+        <div class="snum">2</div>
+        <div class="sbox"><strong>Zod validation</strong> <span style="color:var(--text-muted)">— validates <code>{ message, history, chapterNumber?, useWebSearch }</code> → 400 Bad Request if invalid</span></div>
+      </div>
+
+      <div class="step-row">
+        <div class="snum">3</div>
+        <div class="sbox" style="border-color:rgba(42,74,69,.6)">
+          <span class="badge b-teal" style="margin-right:6px">Supabase</span>
+          <strong>SELECT</strong> from <code>projects</code>
+          <span style="color:var(--text-muted)"> — title, author_name, source_language, target_language, genre · WHERE id = projectId</span>
+        </div>
+      </div>
+
+      <div class="step-row" style="align-items:flex-start">
+        <div class="snum" style="background:rgba(92,118,109,.25);color:var(--sage-light);margin-top:2px">4</div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--sage-light);font-weight:600;margin-bottom:8px">
+            RAG Pipeline — <code>buildAssistantContext()</code> — 3 parallel queries
+          </div>
+          <div class="parallel">
+            <div class="pitem" style="border-color:rgba(61,90,115,.4)">
+              <div class="pitem-title" style="color:#7AABCC">Voyage AI → Supabase</div>
+              <div class="pitem-body">
+                <code>generateEmbedding(query)</code><br>
+                model: <em>voyage-3-lite</em><br>
+                → <code>match_chunks()</code> RPC<br>
+                returns top 4 semantic hits<br><br>
+                If <code>chapterNumber</code> provided:<br>
+                fetch chapter N-1, N, N+1<br>
+                pin them ahead of semantic results<br>
+                (max 5 chapters total)
+              </div>
+            </div>
+            <div class="pitem" style="border-color:rgba(42,74,69,.5)">
+              <div class="pitem-title" style="color:#7DD4C9">Supabase — characters</div>
+              <div class="pitem-body">
+                SELECT from <code>characters</code><br>
+                WHERE project_id = …<br>
+                fields: name, role,<br>
+                confirmed_target_name,<br>
+                tone_tags, translator_note<br>
+                ORDER BY role ASC<br><br>
+                All characters returned<br>
+                (no semantic filtering)
+              </div>
+            </div>
+            <div class="pitem" style="border-color:rgba(42,74,69,.5)">
+              <div class="pitem-title" style="color:#7DD4C9">Supabase — glossary</div>
+              <div class="pitem-body">
+                SELECT from <code>glossary_terms</code><br>
+                WHERE project_id = …<br>
+                AND status = 'approved'<br>
+                AND approved_translation<br>
+                &nbsp;&nbsp;IS NOT NULL<br><br>
+                fields: source_term,<br>
+                approved_translation,<br>
+                term_type
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-row">
+        <div class="snum">5</div>
+        <div class="sbox"><strong>buildAssistantSystemPrompt(project, ragContext)</strong><span style="color:var(--text-muted)"> — assembles full system prompt string (see prompts section below)</span></div>
+      </div>
+
+      <div class="step-row">
+        <div class="snum">6</div>
+        <div class="sbox"><strong>buildScopeContext(project, characters)</strong><span style="color:var(--text-muted)"> — compact string: title, author, languages, genre, character names only (no RAG, no glossary — keeps scope check cheap)</span></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="conn">
+  <div class="conn-line" style="height:18px"></div>
+  <div class="conn-label">assistantGraph.streamEvents({ messages, systemPrompt, scopeContext, useWebSearch }, { version: 'v2' })</div>
+  <div class="conn-line" style="height:14px"></div>
+  <div class="conn-head"></div>
+</div>
+
+<!-- ═══ 3. LANGGRAPH ═══ -->
+<div class="layer">
+  <div class="layer-hdr" style="background:rgba(107,61,42,.2)">
+    <div class="hdot" style="background:#C9996B"></div>
+    <span style="color:#D4A87A">LANGGRAPH — 5-Node Compiled Graph</span>
+    <span class="hpath">src/lib/ai/graphs/assistant-graph.ts</span>
+  </div>
+  <div class="layer-body">
+    <div class="gflow">
+
+      <!-- START -->
+      <div class="start-pill">START</div>
+      <div class="mini-arr"><div class="mini-line" style="height:14px"></div><div class="mini-head"></div></div>
+
+      <!-- scope_check -->
+      <div class="gnode g-scope">
+        <div class="gnode-hdr">
+          <span class="gnode-name">scope_check</span>
+          <div style="display:flex;gap:6px">
+            <span class="badge b-stone">Claude Sonnet 4.6</span>
+            <span class="badge b-sage">structured output</span>
+          </div>
+        </div>
+        <div class="gnode-body">
+          Uses <code>SCOPE_CHECK_SYSTEM_PROMPT</code> + compact <code>scopeContext</code> (title, author, languages, char names — no RAG).<br>
+          <strong style="color:var(--stone)">Generous by design</strong> — allows anything plausibly related to the book, its cultures, or translation craft.<br>
+          Only blocks clearly unrelated queries: sports celebrities, financial advice, coding help, unrelated entertainment.
+        </div>
+        <div class="gnode-out">Output → { inScope: boolean, blockMessage: string | null }</div>
+      </div>
+
+      <!-- Fork after scope_check -->
+      <div class="branch-fork">
+        <div class="fork-arm">
+          <div class="fork-label" style="color:#D4845A">inScope = false</div>
+          <div class="mini-line" style="height:22px;background:rgba(138,69,37,.5)"></div>
+          <div class="mini-head" style="border-top-color:rgba(138,69,37,.5)"></div>
+        </div>
+        <div class="fork-arm">
+          <div class="fork-label" style="color:var(--sage-light)">inScope = true</div>
+          <div class="mini-line" style="height:22px;background:rgba(92,118,109,.5)"></div>
+          <div class="mini-head" style="border-top-color:rgba(92,118,109,.5)"></div>
+        </div>
+      </div>
+
+      <!-- Branch: blocked vs decide_search -->
+      <div class="branch-grid">
+
+        <!-- blocked_response -->
+        <div class="gnode g-block">
+          <div class="gnode-hdr">
+            <span class="gnode-name" style="color:#D4845A">blocked_response</span>
+            <span class="badge b-red">pure function</span>
+          </div>
+          <div class="gnode-body">
+            No LLM call. Creates <code>AIMessage(blockMessage)</code>.<br>
+            Warm, friendly tone — names the book title and suggests what IS allowed.<br>
+            Captured from <code>on_chain_end</code> event in the API streaming loop → emitted as single SSE chunk.
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;margin-top:10px;gap:3px">
+            <div class="mini-line" style="height:14px;background:rgba(138,69,37,.4)"></div>
+            <div class="end-pill" style="background:rgba(138,69,37,.12);border:1px solid rgba(138,69,37,.35);color:#D4845A">END</div>
+          </div>
+        </div>
+
+        <!-- decide_search -->
+        <div class="gnode g-decide">
+          <div class="gnode-hdr">
+            <span class="gnode-name">decide_search</span>
+            <div style="display:flex;gap:6px">
+              <span class="badge b-stone">Claude Sonnet 4.6</span>
+              <span class="badge b-sage">structured output</span>
+            </div>
+          </div>
+          <div class="gnode-body">
+            <strong style="color:var(--stone)">Short-circuits immediately</strong> (returns <code>shouldSearch: false</code>) when <code>useWebSearch = false</code> — no LLM call.<br>
+            Otherwise uses <code>DECIDE_SEARCH_SYSTEM_PROMPT</code>: is external/factual info needed, or can RAG context answer this?<br>
+            Produces an optimised Tavily search query if yes.
+          </div>
+          <div class="gnode-out">Output → { shouldSearch: boolean, searchQuery: string }</div>
+
+          <!-- sub-fork inside this column -->
+          <div style="display:flex;justify-content:space-between;padding:0 30px;height:40px;align-items:flex-end;margin-top:4px">
+            <div class="fork-arm">
+              <div class="fork-label" style="color:var(--text-muted)">!shouldSearch</div>
+              <div class="mini-line" style="height:18px;background:rgba(92,118,109,.4)"></div>
+              <div class="mini-head" style="border-top-color:rgba(92,118,109,.4)"></div>
+            </div>
+            <div class="fork-arm">
+              <div class="fork-label" style="color:var(--terra)">shouldSearch = true</div>
+              <div class="mini-line" style="height:18px;background:rgba(201,153,107,.4)"></div>
+              <div class="mini-head" style="border-top-color:rgba(201,153,107,.4)"></div>
+            </div>
+          </div>
+
+          <!-- sub-branch -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:0">
+            <div style="font-size:10px;color:var(--text-muted);text-align:center;padding-top:4px">(skips to llm_response)</div>
+            <div class="gnode g-search" style="padding:8px 11px">
+              <div class="gnode-hdr" style="margin-bottom:4px">
+                <span class="gnode-name" style="font-size:11px;color:var(--terra)">web_search</span>
+                <span class="badge b-terra">Tavily API</span>
+              </div>
+              <div class="gnode-body" style="font-size:10px">
+                POST https://api.tavily.com/search<br>
+                search_depth: <em>basic</em><br>
+                max_results: 5<br>
+                Returns: { title, url, content, score }[]<br>
+                Silent fail on API error → null
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Converge arrow to llm_response -->
+      <div class="mini-arr" style="margin-top:8px">
+        <div class="mini-line" style="height:22px;background:rgba(92,118,109,.5)"></div>
+        <div class="mini-head" style="border-top-color:rgba(92,118,109,.5)"></div>
+      </div>
+
+      <!-- llm_response -->
+      <div class="gnode g-respond">
+        <div class="gnode-hdr">
+          <span class="gnode-name" style="color:var(--sage-light)">llm_response</span>
+          <div style="display:flex;gap:6px">
+            <span class="badge b-stone">Claude Sonnet 4.6</span>
+            <span class="badge b-sage">streaming</span>
+          </div>
+        </div>
+        <div class="gnode-body">
+          Builds final input as: <code>[SystemMessage(systemPrompt), ...optionalSearchContext, ...state.messages]</code><br>
+          If <code>searchResults</code> present: injects them as a synthetic <code>HumanMessage</code> prefixed
+          <em>"[Web search results — not from the user]"</em> — not persisted to chat history.<br>
+          Emits <code>on_chat_model_stream</code> events. API route filters by
+          <code>event.metadata.langgraph_node === 'llm_response'</code> to stream only this node's tokens.
+        </div>
+        <div class="gnode-out">Output → streaming AIMessage tokens → SSE  data: "token"\n\n  …  data: [DONE]\n\n</div>
+      </div>
+
+      <div class="mini-arr" style="margin-top:6px">
+        <div class="mini-line" style="height:14px"></div>
+        <div class="mini-head"></div>
+      </div>
+      <div class="end-pill" style="background:var(--border-strong);border:1px solid var(--border-strong);color:var(--text-muted)">END</div>
+
+    </div>
+  </div>
+</div>
+
+<div class="conn">
+  <div class="conn-line" style="height:18px"></div>
+  <div class="conn-label">SSE  ·  text/event-stream  ·  data: "token"\n\n  …  data: [DONE]\n\n</div>
+  <div class="conn-line" style="height:14px"></div>
+  <div class="conn-head"></div>
+</div>
+
+<!-- ═══ 4. RESPONSE ═══ -->
+<div class="layer">
+  <div class="layer-hdr" style="background:rgba(58,82,72,.2)">
+    <div class="hdot" style="background:#5C766D"></div>
+    <span style="color:#7AAF9B">RESPONSE — Stream receipt, cost logging, session persistence</span>
+  </div>
+  <div class="layer-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="node">
+        <div class="node-title" style="color:var(--sage-light)">API Route — post-stream</div>
+        <ul class="node-detail">
+          <li><strong>Normal path:</strong> emit tokens from <code>on_chat_model_stream</code> (node = <code>llm_response</code>)</li>
+          <li><strong>Blocked path:</strong> no stream tokens → read AIMessage from <code>on_chain_end</code> of <code>blocked_response</code> → emit as single chunk</li>
+          <li><code>logAiCall()</code> → INSERT into <code>ai_call_log</code></li>
+          <li>Token approx: <code>strlen / 4</code> for input &amp; output</li>
+          <li>Cost: <code>(input × $3 + output × $15) / 1 000 000</code> USD</li>
+        </ul>
+      </div>
+      <div class="node">
+        <div class="node-title" style="color:#7AABCC">Browser — receive &amp; persist</div>
+        <ul class="node-detail">
+          <li>Parse SSE lines: <code>data: "token"</code> → append to display</li>
+          <li>Stop on <code>data: [DONE]</code> or <code>data: [ERROR]</code></li>
+          <li>On first message: <code>POST /chat-sessions</code> → creates session</li>
+          <li>After <code>[DONE]</code>: <code>PATCH /chat-sessions/{id}</code> → saves full conversation</li>
+          <li>Renders with <code>ReactMarkdown</code> + <code>remark-gfm</code></li>
+          <li>Sessions retained for 3 days, shown in history sidebar</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="div">
+
+<!-- ═══ SYSTEM PROMPTS ═══ -->
+<h2>System Prompts</h2>
+
+<!-- ① Main System Prompt -->
+<div class="prompt-card">
+  <div class="prompt-hdr">
+    <div class="prompt-hdr-left">
+      <div class="ptitle">① Main System Prompt — <code>buildAssistantSystemPrompt()</code></div>
+      <div class="pmeta">src/lib/ai/prompts/assistant-prompts.ts &nbsp;·&nbsp; node: llm_response &nbsp;·&nbsp; ~400–2000 tokens depending on project size</div>
+    </div>
+    <span class="badge b-sage">llm_response node</span>
+  </div>
+  <div class="prompt-body"><pre><span class="pc"># Assembled dynamically — sections only included when data exists</span>
+
+<span class="pc"># ── Identity ─────────────────────────────────────────────────────────────────</span>
+You are Haydee, an AI co-pilot for literary translators. You are assisting with
+"<span class="pp">{project.title}</span>" by <span class="pp">{project.author_name}</span>, translated from
+<span class="pp">{project.source_language}</span> to <span class="pp">{project.target_language}</span><span class="pp"> ({project.genre})</span>.
+
+<span class="pc"># ── Relevant Chapter Summaries ───────────────────────────────────────────────</span>
+<span class="pc"># Included when RAG returns results. Up to 5 chapters:</span>
+<span class="pc"># – top 4 from semantic search (Voyage AI embedding of user query → match_chunks RPC)</span>
+<span class="pc"># – current chapter neighbourhood (N-1, N, N+1) if chapterNumber was sent, pinned first</span>
+<span class="ps">## Relevant Chapter Summaries</span>
+Chapter <span class="pv">1</span> — "<span class="pv">Chapter Title</span>": <span class="pv">Summary of the chapter's events and significance...</span>
+Chapter <span class="pv">3</span> — "<span class="pv">Chapter Title</span>": <span class="pv">Summary...</span>
+
+<span class="pc"># ── Characters ───────────────────────────────────────────────────────────────</span>
+<span class="pc"># ALL characters for the project, ordered by role. Format per character:</span>
+<span class="pc"># - name (role) [· → "confirmed_target_name"] [· [tone_tags]] [· Note: translator_note]</span>
+<span class="ps">## Characters</span>
+- <span class="pv">Isabel</span> (protagonist) · → "<span class="pv">イサベル</span>" · [<span class="pv">Devoted, Protective, Formal-in-public</span>] · Note: <span class="pv">Uses formal register in public scenes</span>
+- <span class="pv">Tom</span> (protagonist) · → "<span class="pv">トム</span>" · [<span class="pv">Quiet, Duty-bound</span>]
+- <span class="pv">Hannah</span> (secondary) · [<span class="pv">Grief-stricken, Searching</span>]
+
+<span class="pc"># ── Approved Glossary ────────────────────────────────────────────────────────</span>
+<span class="pc"># Only terms with status='approved' AND approved_translation IS NOT NULL</span>
+<span class="ps">## Approved Glossary</span>
+- "<span class="pv">lighthouse keeper</span>" → "<span class="pv">灯台守</span>" (occupation)
+- "<span class="pv">perplexed</span>" → "<span class="pv">途惑う</span>" (verb-form)
+
+<span class="pc"># ── Instructions ─────────────────────────────────────────────────────────────</span>
+Answer questions about language, culture, literary tradition, and translation craft.
+Be thorough but concise. Use markdown for structure when helpful.</pre></div>
+</div>
+
+<!-- ② Scope Check -->
+<div class="prompt-card">
+  <div class="prompt-hdr">
+    <div class="prompt-hdr-left">
+      <div class="ptitle">② Scope Check System Prompt — <code>SCOPE_CHECK_SYSTEM_PROMPT</code></div>
+      <div class="pmeta">src/lib/ai/prompts/assistant-prompts.ts &nbsp;·&nbsp; node: scope_check &nbsp;·&nbsp; structured output: { inScope, blockMessage }</div>
+    </div>
+    <span class="badge b-red">scope_check node</span>
+  </div>
+  <div class="prompt-body"><pre>You are a scope filter for a literary translation assistant. Decide if a user's question
+is within scope for the translation project.
+
+<span class="pk">SCOPE IS BROAD</span> — allow anything that could plausibly help a translator working on this specific book:
+- Translation craft: word choices, register, tone, voice, rhythm, literary devices
+- The book's world: plot, characters, themes, settings, historical period, cultural context
+- The source culture: history, customs, social norms, religion, cuisine, geography, language quirks
+- The target culture: how concepts map, what equivalents exist, what would resonate
+- The author's style, influences, or literary tradition
+- Any factual research a translator would reasonably need (historical institutions, dialect terms,
+  social customs, religious practices, geography)
+- General translation theory and practice
+
+<span class="pk">BLOCK ONLY</span> when the question is completely unrelated to the book, its world, its cultures,
+or translation work. Examples to block:
+- Sports celebrities or current sports scores unrelated to the book
+- Celebrity gossip or entertainment news unrelated to the book's era/culture
+- Financial advice, medical diagnosis, legal advice
+- Coding help, tech support
+- Questions about totally unrelated public figures or topics
+
+When in doubt: <span class="pk">ALLOW</span>. Be generous — the translator deserves a broad research assistant.
+
+Respond ONLY with valid JSON: <span class="pv">{"inScope": true|false, "blockMessage": null|"string"}</span>
+<span class="pc">blockMessage is only set when inScope is false.
+It should be warm, 1-2 sentences, name the book title, suggest what IS welcome.</span>
+
+<span class="pc">─── User prompt format sent to this node ─────────────────────────────────────</span>
+<span class="pc">Project context:                                                                 </span>
+<span class="pv">  Book: "{title}" by {author_name}                                              </span>
+<span class="pv">  Translation: {source_language} → {target_language}                            </span>
+<span class="pv">  Genre: {genre}                                                                 </span>
+<span class="pv">  Characters: CharA (protagonist), CharB (secondary), ...                        </span>
+
+<span class="pc">User's question:                                                                 </span>
+<span class="pv">  "{userMessage}"                                                                </span>
+
+<span class="pc">Is this within scope?</span></pre></div>
+</div>
+
+<!-- ③ Decide Search -->
+<div class="prompt-card">
+  <div class="prompt-hdr">
+    <div class="prompt-hdr-left">
+      <div class="ptitle">③ Decide Search System Prompt — <code>DECIDE_SEARCH_SYSTEM_PROMPT</code></div>
+      <div class="pmeta">src/lib/ai/prompts/assistant-prompts.ts &nbsp;·&nbsp; node: decide_search (only when useWebSearch=true) &nbsp;·&nbsp; structured output: { shouldSearch, searchQuery }</div>
+    </div>
+    <span class="badge b-terra">decide_search node</span>
+  </div>
+  <div class="prompt-body"><pre>You are a research router for a literary translation assistant. Decide whether a web search
+would meaningfully improve the answer to the user's question.
+
+<span class="pk">Search IS useful for:</span>
+- Factual questions about historical events, figures, or periods relevant to the book
+- Questions about cultural practices, institutions, customs needing current/external reference
+- Clarifying specific foreign-language terms, idioms, or regional expressions
+- Questions about the author's biography, other works, or literary tradition
+- Questions about geographic locations, foods, or objects needing accurate description
+
+<span class="pk">Search is NOT needed for:</span>
+- Conversational questions about how to translate a specific passage
+- Analytical questions about tone, voice, or style decisions
+- Questions answerable from the provided project context (characters, glossary, chapter summaries)
+- Simple clarifications or follow-up questions in an ongoing conversation
+
+If search is warranted, produce a concise, optimised search query
+(English preferred unless the source language is critical to the search).
+
+Respond ONLY with valid JSON: <span class="pv">{"shouldSearch": true|false, "searchQuery": "string"}</span>
+
+<span class="pc">─── User prompt format sent to this node ─────────────────────────────────────</span>
+<span class="pc">Project context: [same compact scopeContext as scope_check]                      </span>
+<span class="pc">User's question: "{userMessage}"                                                 </span>
+<span class="pc">Should a web search be performed?</span></pre></div>
+</div>
+
+</body>
+</html>

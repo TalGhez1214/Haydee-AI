@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { HumanMessage, AIMessage } from '@langchain/core/messages'
 import { z } from 'zod'
 import { assistantGraph } from '@/lib/ai/graphs/assistant-graph'
-import { buildAssistantSystemPrompt } from '@/lib/ai/prompts/assistant-prompts'
+import { buildAssistantSystemPrompt, buildScopeContext } from '@/lib/ai/prompts/assistant-prompts'
 import { buildAssistantContext } from '@/lib/ai/rag/context-builder'
 import { logAiCall } from '@/lib/ai/utils/cost'
 
@@ -17,6 +17,7 @@ const RequestSchema = z.object({
     .max(10)
     .default([]),
   chapterNumber: z.number().int().optional(),
+  useWebSearch: z.boolean().default(false),
 })
 
 export async function POST(req: Request, { params }: Params) {
@@ -27,7 +28,7 @@ export async function POST(req: Request, { params }: Params) {
   const parsed = RequestSchema.safeParse(body)
   if (!parsed.success) return apiError('Invalid request body', 400)
 
-  const { message, history, chapterNumber } = parsed.data
+  const { message, history, chapterNumber, useWebSearch } = parsed.data
   const supabase = createClient()
 
   const { data: project } = await supabase
@@ -47,6 +48,7 @@ export async function POST(req: Request, { params }: Params) {
   )
 
   const systemPrompt = buildAssistantSystemPrompt(project, ragContext)
+  const scopeContext = buildScopeContext(project, ragContext)
 
   const messages = [
     ...history.map((m) =>
@@ -56,20 +58,27 @@ export async function POST(req: Request, { params }: Params) {
   ]
 
   const eventStream = assistantGraph.streamEvents(
-    { messages, systemPrompt },
+    { messages, systemPrompt, scopeContext, useWebSearch },
     { version: 'v2' }
   )
 
-  // Approximate token counts for cost logging
-  const inputTokens = Math.ceil((systemPrompt + JSON.stringify(messages)).length / 4)
+  const inputTokens = Math.ceil(
+    (systemPrompt + scopeContext + JSON.stringify(messages)).length / 4
+  )
   let outputChars = 0
+  let tokenStreamed = false
+  let blockedMessageText: string | null = null
 
   const readable = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder()
       try {
         for await (const event of eventStream) {
-          if (event.event === 'on_chat_model_stream') {
+          // Stream tokens only from the main response node
+          if (
+            event.event === 'on_chat_model_stream' &&
+            (event.metadata as Record<string, unknown>)?.langgraph_node === 'llm_response'
+          ) {
             const content = event.data.chunk?.content
             const text =
               typeof content === 'string'
@@ -78,14 +87,39 @@ export async function POST(req: Request, { params }: Params) {
                   ? content.map((c: { text?: string }) => c.text ?? '').join('')
                   : ''
             if (text) {
+              tokenStreamed = true
               outputChars += text.length
               controller.enqueue(encoder.encode(`data: ${JSON.stringify(text)}\n\n`))
             }
           }
+
+          // Capture block message from blocked_response node
+          if (
+            event.event === 'on_chain_end' &&
+            (event.metadata as Record<string, unknown>)?.langgraph_node === 'blocked_response'
+          ) {
+            const output = event.data?.output as { messages?: { content: unknown }[] } | undefined
+            const lastMsg = output?.messages?.[output.messages.length - 1]
+            if (lastMsg) {
+              blockedMessageText =
+                typeof lastMsg.content === 'string' ? lastMsg.content : String(lastMsg.content)
+            }
+          }
         }
+
+        // Stream block message word-by-word (blocked path)
+        if (!tokenStreamed && blockedMessageText) {
+          outputChars = blockedMessageText.length
+          const words = blockedMessageText.split(' ')
+          for (let i = 0; i < words.length; i++) {
+            const chunk = i < words.length - 1 ? words[i] + ' ' : words[i]
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`))
+            await new Promise<void>((resolve) => setTimeout(resolve, 30))
+          }
+        }
+
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
 
-        // Log cost after streaming completes
         const outputTokens = Math.ceil(outputChars / 4)
         await logAiCall({
           supabase,
